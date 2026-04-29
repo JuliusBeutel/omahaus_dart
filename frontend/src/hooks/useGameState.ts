@@ -7,23 +7,22 @@ export function useGameState(sessionId: string | null): GameState | null {
   useEffect(() => {
     if (!sessionId) return;
 
-    let source: EventSource;
-    let retryTimeout: ReturnType<typeof setTimeout>;
+    let active = true;
 
-    function connect() {
-      source = new EventSource(`/api/sessions/${sessionId}/events`);
-      source.onmessage = (e) => setState(JSON.parse(e.data) as GameState);
-      source.onerror = () => {
-        source.close();
-        retryTimeout = setTimeout(connect, 2000);
-      };
+    async function poll() {
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}`);
+        if (res.ok && active) setState(await res.json() as GameState);
+      } catch {
+        // network error — keep last state, retry on next tick
+      }
     }
 
-    connect();
-
+    poll();
+    const interval = setInterval(poll, 800);
     return () => {
-      source?.close();
-      clearTimeout(retryTimeout);
+      active = false;
+      clearInterval(interval);
     };
   }, [sessionId]);
 
