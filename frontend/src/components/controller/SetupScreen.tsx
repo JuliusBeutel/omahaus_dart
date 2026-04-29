@@ -27,8 +27,21 @@ export function SetupScreen({ sessionId, state }: Props) {
   }
 
   async function handleStart() {
-    if (state.players.length === 0) return;
     setLoading(true);
+    const pendingName = nameInput.trim();
+    let hasPlayers = state.players.length > 0;
+
+    if (pendingName && state.players.length < 4) {
+      await api.addPlayer(sessionId, pendingName);
+      setNameInput('');
+      hasPlayers = true;
+    }
+
+    if (!hasPlayers) {
+      setLoading(false);
+      return;
+    }
+
     await api.startGame(sessionId);
     setLoading(false);
   }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface Props {
@@ -5,7 +6,19 @@ interface Props {
 }
 
 export function QRCodeDisplay({ sessionId }: Props) {
-  const url = `${window.location.origin}/controller/${sessionId}`;
+  const [origin, setOrigin] = useState(window.location.origin);
+
+  useEffect(() => {
+    fetch('/api/local-ip')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { ip: string } | null) => {
+        if (data?.ip) setOrigin(`http://${data.ip}:${window.location.port}`);
+      })
+      .catch(() => {});
+  }, []);
+
+  const url = `${origin}/controller/${sessionId}`;
+
   return (
     <div style={styles.wrapper}>
       <QRCodeSVG value={url} size={220} bgColor="#ffffff" fgColor="#1a1a2e" />
