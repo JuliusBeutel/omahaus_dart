@@ -2,7 +2,6 @@ import { useParams } from 'react-router-dom';
 import { useGameState } from '../hooks/useGameState';
 import { SetupScreen } from '../components/controller/SetupScreen';
 import { DartInput } from '../components/controller/DartInput';
-import { GameControls } from '../components/controller/GameControls';
 import * as api from '../api/client';
 
 export function ControllerPage() {
@@ -26,7 +25,7 @@ export function ControllerPage() {
   if (state.status === 'finished') {
     const winner = state.players.find((p) => p.id === state.winnerId);
     return (
-      <div style={styles.center}>
+      <div style={{ ...styles.center, background: '#1a1a2e', minHeight: '100vh' }}>
         <div style={styles.finishBox}>
           <p style={styles.finishLabel}>Spiel beendet</p>
           <p style={styles.finishWinner}>{winner?.name} gewinnt!</p>
@@ -39,46 +38,105 @@ export function ControllerPage() {
   }
 
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const canUndo = state.currentTurn.throws.length > 0;
+  // Undo is possible as long as at least one throw has ever been made this game
+  const canUndo = state.currentTurn.throws.length > 0 || state.turnHistory.length > 0;
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.header}>
-        <span style={styles.playerName}>{currentPlayer?.name}</span>
-        <span style={styles.playerScore}>{currentPlayer?.score}</span>
+    <div style={styles.page}>
+      <div style={styles.scoreCard}>
+        <p style={styles.playerName}>{currentPlayer?.name}</p>
+        <p style={styles.score}>{currentPlayer?.score}</p>
+        <div style={styles.throwSlots}>
+          {[0, 1, 2].map((i) => {
+            const t = state.currentTurn.throws[i];
+            return (
+              <div key={i} style={styles.slot}>
+                {t ? (
+                  <span style={styles.slotValue}>{throwLabel(t)}</span>
+                ) : (
+                  <DartIcon />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <DartInput sessionId={id} />
-      <GameControls sessionId={id} canUndo={canUndo} />
+      <DartInput sessionId={id} canUndo={canUndo} />
     </div>
   );
 }
 
+function throwLabel(t: { value: number; multiplier: number }): string {
+  const prefix = t.multiplier === 2 ? 'D' : t.multiplier === 3 ? 'T' : '';
+  const field = t.value === 25 ? 'Bull' : String(t.value);
+  return `${prefix}${field}`;
+}
+
+function DartIcon() {
+  return (
+    <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
+      <polygon points="9,0 13,9 5,9" fill="#c8d6e8" />
+      <rect x="8" y="9" width="2" height="14" rx="1" fill="#c8d6e8" />
+      <rect x="6" y="22" width="6" height="2" rx="1" fill="#c8d6e8" />
+      <rect x="7" y="24" width="4" height="2" rx="1" fill="#c8d6e8" />
+    </svg>
+  );
+}
+
 const styles = {
-  wrapper: {
+  page: {
+    background: '#1a1a2e',
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '16px',
-    paddingBottom: '32px',
   },
-  header: {
+  scoreCard: {
+    background: '#16213e',
+    textAlign: 'center' as const,
+    padding: '24px 16px 20px',
+    borderBottom: '1px solid #0f3460',
+  },
+  playerName: {
+    fontSize: '1.1rem',
+    color: '#4f86f7',
+    fontWeight: '600' as const,
+    margin: 0,
+    marginBottom: '4px',
+  },
+  score: {
+    fontSize: '4rem',
+    fontWeight: 'bold' as const,
+    color: '#eaeaea',
+    margin: 0,
+    lineHeight: 1.1,
+  },
+  throwSlots: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '20px 16px 8px',
-    maxWidth: '480px',
-    margin: '0 auto',
-    width: '100%',
+    gap: '10px',
+    justifyContent: 'center',
+    marginTop: '16px',
   },
-  playerName: { fontSize: '1.4rem', fontWeight: 'bold' as const, color: '#e94560' },
-  playerScore: { fontSize: '2.2rem', fontWeight: 'bold' as const },
+  slot: {
+    width: '72px',
+    height: '44px',
+    background: '#0f3460',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  slotValue: {
+    fontSize: '1.1rem',
+    fontWeight: '700' as const,
+    color: '#eaeaea',
+  },
   center: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: '100vh',
     padding: '24px',
   },
-  info: { color: '#aaa', fontSize: '1.2rem' },
+  info: { color: '#8896a9', fontSize: '1.1rem' },
   finishBox: {
     display: 'flex',
     flexDirection: 'column' as const,
@@ -86,17 +144,16 @@ const styles = {
     gap: '20px',
     textAlign: 'center' as const,
   },
-  finishLabel: { fontSize: '1.1rem', color: '#aaa' },
-  finishWinner: { fontSize: '2rem', fontWeight: 'bold' as const, color: '#e94560' },
+  finishLabel: { fontSize: '1rem', color: '#8896a9' },
+  finishWinner: { fontSize: '2rem', fontWeight: 'bold' as const, color: '#4f86f7' },
   resetBtn: {
     padding: '16px 40px',
     fontSize: '1.1rem',
     fontWeight: 'bold' as const,
-    background: '#e94560',
+    background: '#4f86f7',
     color: '#fff',
     border: 'none',
     borderRadius: '12px',
     cursor: 'pointer',
-    marginTop: '8px',
   },
 };

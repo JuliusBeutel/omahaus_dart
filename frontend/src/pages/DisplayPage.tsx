@@ -64,6 +64,8 @@ const styles = {
     padding: '40px',
     minHeight: '100vh',
     alignItems: 'flex-start',
+    background: '#1a1a2e',
+    color: '#eaeaea',
   },
   left: {
     display: 'flex',
@@ -83,6 +85,8 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
+    background: '#1a1a2e',
+    color: '#eaeaea',
   },
   connecting: { color: '#aaa', fontSize: '1.4rem' },
   winnerBox: {

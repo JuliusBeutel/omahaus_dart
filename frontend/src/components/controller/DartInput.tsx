@@ -4,38 +4,58 @@ import * as api from '../../api/client';
 
 interface Props {
   sessionId: string;
+  canUndo: boolean;
 }
 
-const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const NUMBERS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
 
-export function DartInput({ sessionId }: Props) {
+function Dots({ count }: { count: number }) {
+  return (
+    <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', marginTop: '5px' }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4f86f7' }} />
+      ))}
+    </div>
+  );
+}
+
+function BackArrow() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5" />
+      <path d="M12 5l-7 7 7 7" />
+    </svg>
+  );
+}
+
+export function DartInput({ sessionId, canUndo }: Props) {
   const [multiplier, setMultiplier] = useState<Multiplier>(1);
   const [pending, setPending] = useState(false);
 
-  async function handleThrow(value: number, overrideMultiplier?: Multiplier) {
+  async function handleThrow(value: number, forceMultiplier?: Multiplier) {
     if (pending) return;
-    const m = overrideMultiplier ?? multiplier;
     setPending(true);
-    await api.throwDart(sessionId, value, m);
+    await api.throwDart(sessionId, value, forceMultiplier ?? multiplier);
+    setMultiplier(1);
     setPending(false);
   }
 
-  const multipliers: { label: string; value: Multiplier }[] = [
-    { label: 'Single', value: 1 },
-    { label: 'Double', value: 2 },
-    { label: 'Triple', value: 3 },
-  ];
+  function toggleMultiplier(m: 2 | 3) {
+    setMultiplier((prev) => (prev === m ? 1 : m));
+  }
+
+  const bull25Disabled = pending || multiplier === 3;
 
   return (
     <div style={styles.wrapper}>
-      <div style={styles.multiplierRow}>
-        {multipliers.map((m) => (
+      <div style={styles.toggleRow}>
+        {([2, 3] as const).map((m) => (
           <button
-            key={m.value}
-            style={{ ...styles.multiplierBtn, ...(multiplier === m.value ? styles.multiplierActive : {}) }}
-            onClick={() => setMultiplier(m.value)}
+            key={m}
+            style={{ ...styles.toggleBtn, ...(multiplier === m ? styles.toggleActive : {}) }}
+            onClick={() => toggleMultiplier(m)}
           >
-            {m.label}
+            {m === 2 ? 'Double' : 'Triple'}
           </button>
         ))}
       </div>
@@ -44,31 +64,44 @@ export function DartInput({ sessionId }: Props) {
         {NUMBERS.map((n) => (
           <button
             key={n}
-            style={styles.numBtn}
+            style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
             onClick={() => handleThrow(n)}
             disabled={pending}
           >
-            {n}
+            <span style={styles.numText}>{n}</span>
+            {multiplier > 1 && <Dots count={multiplier} />}
           </button>
         ))}
-      </div>
 
-      <div style={styles.bullRow}>
         <button
-          style={{ ...styles.bullBtn }}
-          onClick={() => handleThrow(25, 1)}
+          style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
+          onClick={() => handleThrow(0)}
           disabled={pending}
         >
-          Bull
-          <span style={styles.bullSub}>25</span>
+          <span style={styles.numText}>0</span>
+          {multiplier > 1 && <Dots count={multiplier} />}
         </button>
+
         <button
-          style={{ ...styles.bullBtn, ...styles.bullDouble }}
-          onClick={() => handleThrow(25, 2)}
-          disabled={pending}
+          style={{ ...styles.numBtn, ...(bull25Disabled ? styles.dimmed : {}) }}
+          onClick={() => handleThrow(25)}
+          disabled={bull25Disabled}
         >
-          Bull's Eye
-          <span style={styles.bullSub}>50</span>
+          <span style={styles.numText}>25</span>
+          {multiplier === 2 && <Dots count={2} />}
+        </button>
+
+        <button
+          style={{
+            ...styles.numBtn,
+            ...styles.undoBtn,
+            gridColumn: 'span 2',
+            ...(!canUndo ? styles.dimmed : {}),
+          }}
+          onClick={() => api.undoThrow(sessionId)}
+          disabled={!canUndo}
+        >
+          <BackArrow />
         </button>
       </div>
     </div>
@@ -77,57 +110,62 @@ export function DartInput({ sessionId }: Props) {
 
 const styles = {
   wrapper: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '16px',
-    padding: '16px',
-    maxWidth: '480px',
-    margin: '0 auto',
-  },
-  multiplierRow: { display: 'flex', gap: '8px' },
-  multiplierBtn: {
     flex: 1,
     padding: '12px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+    background: '#1a1a2e',
+  },
+  toggleRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '10px',
+  },
+  toggleBtn: {
+    padding: '14px',
     fontSize: '1rem',
+    fontWeight: '600' as const,
     background: '#16213e',
-    color: '#eaeaea',
-    border: '2px solid transparent',
-    borderRadius: '10px',
+    color: '#8896a9',
+    border: '1.5px solid #0f3460',
+    borderRadius: '12px',
     cursor: 'pointer',
   },
-  multiplierActive: { borderColor: '#e94560', color: '#e94560' },
+  toggleActive: {
+    background: '#0f3460',
+    color: '#4f86f7',
+    borderColor: '#4f86f7',
+  },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '8px',
   },
   numBtn: {
-    padding: '18px 0',
-    fontSize: '1.3rem',
-    fontWeight: 'bold' as const,
-    background: '#0f3460',
-    color: '#eaeaea',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'opacity 0.1s',
-  },
-  bullRow: { display: 'flex', gap: '8px' },
-  bullBtn: {
-    flex: 1,
-    padding: '18px',
-    fontSize: '1.1rem',
-    fontWeight: 'bold' as const,
-    background: '#0f3460',
-    color: '#eaeaea',
-    border: 'none',
-    borderRadius: '10px',
+    padding: '14px 0',
+    background: '#16213e',
+    border: '1.5px solid #0f3460',
+    borderRadius: '12px',
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
-    gap: '4px',
+    justifyContent: 'center',
+    minHeight: '56px',
   },
-  bullDouble: { background: '#16213e', border: '2px solid #0f3460' },
-  bullSub: { fontSize: '0.85rem', color: '#aaa' },
+  numText: {
+    fontSize: '1.25rem',
+    fontWeight: '600' as const,
+    color: '#eaeaea',
+    lineHeight: 1,
+  },
+  undoBtn: {
+    background: '#0f3460',
+    color: '#8896a9',
+    borderColor: '#1a3a6e',
+  },
+  dimmed: {
+    opacity: 0.3,
+  },
 };
