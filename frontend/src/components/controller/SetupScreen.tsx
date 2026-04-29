@@ -37,27 +37,28 @@ export function SetupScreen({ sessionId, state }: Props) {
       hasPlayers = true;
     }
 
-    if (!hasPlayers) {
-      setLoading(false);
-      return;
-    }
+    if (!hasPlayers) { setLoading(false); return; }
 
     await api.startGame(sessionId);
     setLoading(false);
   }
 
   return (
-    <div style={styles.wrapper}>
-      <h1 style={styles.title}>Spiel einrichten</h1>
+    <div className="flex flex-col gap-6 p-6 max-w-xl mx-auto">
+      <h1 className="text-2xl text-center text-primary">Spiel einrichten</h1>
 
-      <div style={styles.section}>
-        <label style={styles.label}>Spielmodus</label>
-        <div style={styles.modeRow}>
+      <div className="flex flex-col gap-2">
+        <label className="text-xs text-muted uppercase tracking-widest">Spielmodus</label>
+        <div className="flex gap-3">
           {([301, 501] as GameMode[]).map((m) => (
             <button
               key={m}
-              style={{ ...styles.modeBtn, ...(state.mode === m ? styles.modeBtnActive : {}) }}
               onClick={() => handleModeChange(m)}
+              className={`flex-1 p-3 text-xl rounded-xl border-2 cursor-pointer ${
+                state.mode === m
+                  ? 'border-accent text-primary bg-surface'
+                  : 'border-transparent text-muted bg-surface'
+              }`}
             >
               {m}
             </button>
@@ -65,118 +66,55 @@ export function SetupScreen({ sessionId, state }: Props) {
         </div>
       </div>
 
-      <div style={styles.section}>
-        <label style={styles.label}>Spieler ({state.players.length}/4)</label>
-        <ul style={styles.playerList}>
+      <div className="flex flex-col gap-2">
+        <label className="text-xs text-muted uppercase tracking-widest">
+          Spieler ({state.players.length}/4)
+        </label>
+        <ul className="flex flex-col gap-2">
           {state.players.map((p) => (
-            <li key={p.id} style={styles.playerItem}>
+            <li key={p.id} className="flex justify-between items-center px-4 py-3 bg-surface rounded-xl text-primary text-lg">
               <span>{p.name}</span>
-              <button style={styles.removeBtn} onClick={() => handleRemovePlayer(p.id)}>✕</button>
+              <button
+                onClick={() => handleRemovePlayer(p.id)}
+                className="text-danger text-lg cursor-pointer px-2"
+              >
+                ✕
+              </button>
             </li>
           ))}
         </ul>
         {state.players.length < 4 && (
           <form
-            style={styles.addRow}
+            className="flex gap-2"
             onSubmit={(e) => { e.preventDefault(); handleAddPlayer(); }}
           >
             <input
-              style={styles.input}
+              className="flex-1 px-4 py-3 bg-surface text-primary border-2 border-overlay rounded-xl outline-none"
               placeholder="Name eingeben"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               maxLength={20}
               autoFocus
             />
-            <button type="submit" style={styles.addBtn}>+</button>
+            <button
+              type="submit"
+              className="px-5 py-3 bg-overlay text-primary rounded-xl text-2xl cursor-pointer"
+            >
+              +
+            </button>
           </form>
         )}
       </div>
 
       <button
-        style={{ ...styles.startBtn, ...(state.players.length === 0 || loading ? styles.startBtnDisabled : {}) }}
         onClick={handleStart}
         disabled={state.players.length === 0 || loading}
+        className={`p-4 bg-action text-primary rounded-xl font-bold text-xl mt-2 cursor-pointer ${
+          state.players.length === 0 || loading ? 'opacity-40 cursor-not-allowed' : ''
+        }`}
       >
         {loading ? 'Starte...' : 'Spiel starten'}
       </button>
     </div>
   );
 }
-
-const styles = {
-  wrapper: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '24px',
-    padding: '24px',
-    maxWidth: '480px',
-    margin: '0 auto',
-  },
-  title: { fontSize: '1.6rem', textAlign: 'center' as const, color: '#d3e8cb' },
-  section: { display: 'flex', flexDirection: 'column' as const, gap: '10px' },
-  label: { fontSize: '0.9rem', color: '#aeaeae', textTransform: 'uppercase' as const, letterSpacing: '0.08em' },
-  modeRow: { display: 'flex', gap: '12px' },
-  modeBtn: {
-    flex: 1,
-    padding: '14px',
-    fontSize: '1.2rem',
-    background: '#162e0f',
-    color: '#aeaeae',
-    border: '2px solid transparent',
-    borderRadius: '10px',
-    cursor: 'pointer',
-  },
-  modeBtnActive: { borderColor: '#5a9050', color: '#d3e8cb' },
-  playerList: { listStyle: 'none', display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  playerItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 16px',
-    background: '#162e0f',
-    borderRadius: '10px',
-    fontSize: '1.1rem',
-    color: '#d3e8cb',
-  },
-  removeBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#e94560',
-    fontSize: '1.1rem',
-    cursor: 'pointer',
-    padding: '4px 8px',
-  },
-  addRow: { display: 'flex', gap: '8px' },
-  input: {
-    flex: 1,
-    padding: '12px 16px',
-    fontSize: '1rem',
-    background: '#162e0f',
-    color: '#d3e8cb',
-    border: '2px solid #253d18',
-    borderRadius: '10px',
-    outline: 'none',
-  },
-  addBtn: {
-    padding: '12px 20px',
-    fontSize: '1.4rem',
-    background: '#253d18',
-    color: '#d3e8cb',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-  },
-  startBtn: {
-    padding: '18px',
-    fontSize: '1.2rem',
-    fontWeight: 'bold' as const,
-    background: '#2a5518',
-    color: '#d3e8cb',
-    border: 'none',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    marginTop: '8px',
-  },
-  startBtnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
-};

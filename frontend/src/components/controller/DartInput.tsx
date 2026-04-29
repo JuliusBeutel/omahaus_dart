@@ -9,16 +9,6 @@ interface Props {
 
 const NUMBERS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
 
-function Dots({ count }: { count: number }) {
-  return (
-    <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', marginTop: '5px' }}>
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#d3e8cb' }} />
-      ))}
-    </div>
-  );
-}
-
 function BackArrow() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -47,59 +37,58 @@ export function DartInput({ sessionId, canUndo }: Props) {
   const bull25Disabled = pending || multiplier === 3;
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.toggleRow}>
+    <div className="flex-1 flex flex-col gap-2 p-3 bg-base">
+      <div className="grid grid-cols-2 gap-2">
         {([2, 3] as const).map((m) => (
           <button
             key={m}
-            style={{ ...styles.toggleBtn, ...(multiplier === m ? styles.toggleActive : {}) }}
             onClick={() => toggleMultiplier(m)}
+            className={`p-3 rounded-xl border-2 font-semibold cursor-pointer ${
+              multiplier === m
+                ? 'bg-overlay text-primary border-accent'
+                : 'bg-surface text-muted border-transparent'
+            }`}
           >
             {m === 2 ? 'Double' : 'Triple'}
           </button>
         ))}
       </div>
 
-      <div style={styles.grid}>
+      <div className="grid grid-cols-4 gap-2">
         {NUMBERS.map((n) => (
           <button
             key={n}
-            style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
             onClick={() => handleThrow(n)}
             disabled={pending}
+            className={`flex flex-col items-center justify-center py-3 min-h-14 bg-surface border border-overlay rounded-xl cursor-pointer ${pending ? 'opacity-30' : ''}`}
           >
-            <span style={styles.numText}>{n}</span>
+            <span className="text-primary font-semibold text-xl leading-none">{n}</span>
             {multiplier > 1 && <Dots count={multiplier} />}
           </button>
         ))}
 
         <button
-          style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
           onClick={() => handleThrow(0)}
           disabled={pending}
+          className={`flex flex-col items-center justify-center py-3 min-h-14 bg-surface border border-overlay rounded-xl cursor-pointer ${pending ? 'opacity-30' : ''}`}
         >
-          <span style={styles.numText}>0</span>
+          <span className="text-primary font-semibold text-xl leading-none">0</span>
           {multiplier > 1 && <Dots count={multiplier} />}
         </button>
 
         <button
-          style={{ ...styles.numBtn, ...(bull25Disabled ? styles.dimmed : {}) }}
           onClick={() => handleThrow(25)}
           disabled={bull25Disabled}
+          className={`flex flex-col items-center justify-center py-3 min-h-14 bg-surface border border-overlay rounded-xl cursor-pointer ${bull25Disabled ? 'opacity-30' : ''}`}
         >
-          <span style={styles.numText}>25</span>
+          <span className="text-primary font-semibold text-xl leading-none">25</span>
           {multiplier === 2 && <Dots count={2} />}
         </button>
 
         <button
-          style={{
-            ...styles.numBtn,
-            ...styles.undoBtn,
-            gridColumn: 'span 2',
-            ...(!canUndo ? styles.dimmed : {}),
-          }}
           onClick={() => api.undoThrow(sessionId)}
           disabled={!canUndo}
+          className={`col-span-2 flex items-center justify-center py-3 min-h-14 bg-overlay border border-overlay rounded-xl cursor-pointer text-muted ${!canUndo ? 'opacity-30' : ''}`}
         >
           <BackArrow />
         </button>
@@ -108,64 +97,12 @@ export function DartInput({ sessionId, canUndo }: Props) {
   );
 }
 
-const styles = {
-  wrapper: {
-    flex: 1,
-    padding: '12px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '10px',
-    background: '#0c1a08',
-  },
-  toggleRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '10px',
-  },
-  toggleBtn: {
-    padding: '14px',
-    fontSize: '1rem',
-    fontWeight: '600' as const,
-    background: '#162e0f',
-    color: '#aeaeae',
-    border: '1.5px solid #253d18',
-    borderRadius: '12px',
-    cursor: 'pointer',
-  },
-  toggleActive: {
-    background: '#253d18',
-    color: '#d3e8cb',
-    borderColor: '#5a9050',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '8px',
-  },
-  numBtn: {
-    padding: '14px 0',
-    background: '#162e0f',
-    border: '1.5px solid #253d18',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '56px',
-  },
-  numText: {
-    fontSize: '1.25rem',
-    fontWeight: '600' as const,
-    color: '#d3e8cb',
-    lineHeight: 1,
-  },
-  undoBtn: {
-    background: '#253d18',
-    color: '#aeaeae',
-    borderColor: '#3a5a2a',
-  },
-  dimmed: {
-    opacity: 0.3,
-  },
-};
+function Dots({ count }: { count: number }) {
+  return (
+    <div className="flex gap-1 justify-center mt-1">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary" />
+      ))}
+    </div>
+  );
+}

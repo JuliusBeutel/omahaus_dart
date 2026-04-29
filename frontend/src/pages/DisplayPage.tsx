@@ -12,8 +12,8 @@ export function DisplayPage() {
 
   if (!state) {
     return (
-      <div style={styles.center}>
-        <p style={styles.connecting}>Verbinde...</p>
+      <div className="flex items-center justify-center min-h-screen bg-base">
+        <p className="text-muted text-2xl">Verbinde...</p>
       </div>
     );
   }
@@ -25,11 +25,11 @@ export function DisplayPage() {
       : '—';
 
     return (
-      <div style={styles.center}>
-        <div style={styles.winnerBox}>
-          <div style={styles.winnerLabel}>Gewinner</div>
-          <div style={styles.winnerName}>{winner?.name ?? '?'}</div>
-          <div style={styles.avg}>Ø {avg} pro Runde</div>
+      <div className="flex items-center justify-center min-h-screen bg-base">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <p className="text-muted text-lg uppercase tracking-widest">Gewinner</p>
+          <p className="text-primary text-8xl font-bold">{winner?.name ?? '?'}</p>
+          <p className="text-primary text-2xl">Ø {avg} pro Runde</p>
         </div>
       </div>
     );
@@ -38,7 +38,10 @@ export function DisplayPage() {
   if (state.status === 'playing') {
     const cols = state.players.length === 4 ? 2 : state.players.length;
     return (
-      <div style={{ ...styles.matchGrid, gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+      <div
+        className="grid h-screen"
+        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      >
         {state.players.map((player, i) => (
           <PlayerCard
             key={player.id}
@@ -52,68 +55,13 @@ export function DisplayPage() {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.left}>
+    <div className="flex gap-10 p-10 min-h-screen bg-base text-primary items-start">
+      <div className="shrink-0">
         <QRCodeDisplay sessionId={id} />
       </div>
-      <div style={styles.right}>
-        <ScoreBoard
-          players={state.players}
-          currentPlayerIndex={state.currentPlayerIndex}
-          isPlaying={false}
-        />
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+        <ScoreBoard players={state.players} />
       </div>
     </div>
   );
 }
-
-const styles = {
-  matchGrid: {
-    display: 'grid',
-    gap: 0,
-    padding: 0,
-    height: '100vh',
-    background: '#0c1a08',
-    alignItems: 'stretch',
-  },
-  page: {
-    display: 'flex',
-    gap: '40px',
-    padding: '40px',
-    minHeight: '100vh',
-    alignItems: 'flex-start',
-    background: '#0c1a08',
-    color: '#d3e8cb',
-  },
-  left: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '32px',
-    flexShrink: 0,
-  },
-  right: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '60vh',
-  },
-  center: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    background: '#0c1a08',
-    color: '#d3e8cb',
-  },
-  connecting: { color: '#aeaeae', fontSize: '1.4rem' },
-  winnerBox: {
-    textAlign: 'center' as const,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '16px',
-  },
-  winnerLabel: { fontSize: '1.4rem', color: '#aeaeae', textTransform: 'uppercase' as const, letterSpacing: '0.1em' },
-  winnerName: { fontSize: '5rem', fontWeight: 'bold' as const, color: '#d3e8cb' },
-  avg: { fontSize: '1.6rem', color: '#d3e8cb' },
-};
