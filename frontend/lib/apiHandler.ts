@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession, saveSession } from './kv';
-import type { GameState } from './types';
+import { getSession, saveSession } from './kv.js';
+import type { GameState } from './types.js';
 
 export function sessionId(req: VercelRequest): string {
   const { id } = req.query as Record<string, string>;

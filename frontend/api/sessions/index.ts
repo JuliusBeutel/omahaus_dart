@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createSession } from '../../lib/gameLogic';
-import { saveSession } from '../../lib/kv';
+import { createSession } from '../../lib/gameLogic.js';
+import { saveSession } from '../../lib/kv.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') { res.status(405).end(); return; }

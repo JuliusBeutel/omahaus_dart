@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession } from '../../lib/kv';
-import { sessionId } from '../../lib/apiHandler';
+import { getSession } from '../../lib/kv.js';
+import { sessionId } from '../../lib/apiHandler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') { res.status(405).end(); return; }

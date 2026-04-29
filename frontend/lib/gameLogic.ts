@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { GameState, GameMode, Multiplier, DartThrow, Player } from './types';
+import type { GameState, GameMode, Multiplier, DartThrow, Player } from './types.js';
 
 export function createSession(sessionId: string): GameState {
   return {
