@@ -1,12 +1,33 @@
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGameState } from '../hooks/useGameState';
 import { ScoreBoard } from '../components/display/ScoreBoard';
 import { QRCodeDisplay } from '../components/display/QRCodeDisplay';
 import { PlayerCard } from '../components/display/PlayerCard';
+import { TurnSummary } from '../components/shared/TurnSummary';
+import type { DartThrow } from '../types/game';
+
+interface SummaryData { throws: DartThrow[]; total: number; }
 
 export function DisplayPage() {
   const { id } = useParams<{ id: string }>();
   const state = useGameState(id ?? null);
+  const prevHistoryLen = useRef(0);
+  const [summary, setSummary] = useState<SummaryData | null>(null);
+
+  useEffect(() => {
+    if (!state) return;
+    const len = state.turnHistory.length;
+    if (len > prevHistoryLen.current) {
+      const completed = state.turnHistory[len - 1];
+      if (!completed.wasBust) {
+        const total = completed.throws.reduce((s, t) => s + t.points, 0);
+        setSummary({ throws: completed.throws, total });
+        setTimeout(() => setSummary(null), 1500);
+      }
+    }
+    prevHistoryLen.current = len;
+  }, [state?.turnHistory.length]);
 
   if (!id) return null;
 
@@ -50,6 +71,7 @@ export function DisplayPage() {
             throws={i === state.currentPlayerIndex ? state.currentTurn.throws : []}
           />
         ))}
+        {summary && <TurnSummary throws={summary.throws} total={summary.total} />}
       </div>
     );
   }

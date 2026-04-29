@@ -49,7 +49,7 @@ export function ControllerPage() {
   const canUndo = state.currentTurn.throws.length > 0 || state.turnHistory.length > 0;
 
   return (
-    <div className="min-h-screen bg-base flex flex-col">
+    <div className="h-screen bg-base flex flex-col overflow-hidden">
       <div className="bg-surface border-b border-overlay text-center px-4 py-5">
         <p className="text-primary font-semibold text-lg mb-1">{currentPlayer?.name}</p>
         <p className="text-primary font-bold text-6xl leading-none">{currentPlayer?.score}</p>
