@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import type { GameMode, GameState } from '../../types/game';
-import * as api from '../../api/client';
+import { useState } from "react";
+import type { GameMode, GameState } from "../../types/game";
+import * as api from "../../api/client";
 
 interface Props {
   sessionId: string;
@@ -8,14 +8,14 @@ interface Props {
 }
 
 export function SetupScreen({ sessionId, state }: Props) {
-  const [nameInput, setNameInput] = useState('');
+  const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleAddPlayer() {
     const name = nameInput.trim();
     if (!name || state.players.length >= 4) return;
     await api.addPlayer(sessionId, name);
-    setNameInput('');
+    setNameInput("");
   }
 
   async function handleRemovePlayer(playerId: string) {
@@ -33,7 +33,7 @@ export function SetupScreen({ sessionId, state }: Props) {
 
     if (pendingName && state.players.length < 4) {
       await api.addPlayer(sessionId, pendingName);
-      setNameInput('');
+      setNameInput("");
       hasPlayers = true;
     }
 
@@ -47,135 +47,104 @@ export function SetupScreen({ sessionId, state }: Props) {
   }
 
   return (
-    <div style={styles.wrapper}>
-      <h1 style={styles.title}>Spiel einrichten</h1>
+    <div className="flex flex-col min-h-screen bg-background px-4 pt-6 pb-28">
+      {/* HEADER */}
+      <h1 className="text-2xl text-center text-primary font-medium opacity-80 mb-4">
+        Spiel einrichten
+      </h1>
 
-      <div style={styles.section}>
-        <label style={styles.label}>Spielmodus</label>
-        <div style={styles.modeRow}>
-          {([301, 501] as GameMode[]).map((m) => (
-            <button
-              key={m}
-              style={{ ...styles.modeBtn, ...(state.mode === m ? styles.modeBtnActive : {}) }}
-              onClick={() => handleModeChange(m)}
-            >
-              {m}
-            </button>
-          ))}
+      {/* GAME MODE */}
+      <div className="mb-6">
+        <div className="bg-surface rounded-2xl p-1 flex shadow-sm">
+          {[301, 501].map((m) => {
+            const active = state.mode === m;
+
+            return (
+              <button
+                key={m}
+                onClick={() => handleModeChange(m as GameMode)}
+                className={`
+                  flex-1 py-4 rounded-xl text-lg font-medium transition-all
+                  ${active ? "bg-accent text-white shadow" : "text-muted"}
+                `}
+              >
+                {m}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div style={styles.section}>
-        <label style={styles.label}>Spieler ({state.players.length}/4)</label>
-        <ul style={styles.playerList}>
+      {/* PLAYERS */}
+      <div className="flex flex-col gap-3 flex-1">
+        {/* PLAYER COUNT */}
+        <span className="text-sm text-muted uppercase tracking-wider">
+          Spieler ({state.players.length}/4)
+        </span>
+
+        {/* PLAYER CARDS */}
+        <div className="flex flex-col gap-3">
           {state.players.map((p) => (
-            <li key={p.id} style={styles.playerItem}>
-              <span>{p.name}</span>
-              <button style={styles.removeBtn} onClick={() => handleRemovePlayer(p.id)}>✕</button>
-            </li>
+            <div
+              key={p.id}
+              className="flex items-center justify-between p-5 rounded-2xl bg-surface shadow-md"
+            >
+              <span className="text-xl font-medium text-primary">{p.name}</span>
+
+              <button
+                onClick={() => handleRemovePlayer(p.id)}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 text-lg"
+              >
+                ✕
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
+
+        {/* ADD PLAYER */}
         {state.players.length < 4 && (
           <form
-            style={styles.addRow}
-            onSubmit={(e) => { e.preventDefault(); handleAddPlayer(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddPlayer();
+            }}
+            className="flex gap-3 mt-2"
           >
             <input
-              style={styles.input}
-              placeholder="Name eingeben"
+              className="flex-1 px-5 py-5 rounded-2xl bg-surface text-lg text-primary outline-none focus:ring-2 focus:ring-accent"
+              placeholder="Neuer Spieler"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               maxLength={20}
-              autoFocus
             />
-            <button type="submit" style={styles.addBtn}>+</button>
+
+            <button
+              type="submit"
+              className="w-16 rounded-2xl bg-accent text-white text-2xl shadow-lg flex items-center justify-center"
+            >
+              +
+            </button>
           </form>
         )}
       </div>
 
-      <button
-        style={{ ...styles.startBtn, ...(state.players.length === 0 || loading ? styles.startBtnDisabled : {}) }}
-        onClick={handleStart}
-        disabled={state.players.length === 0 || loading}
-      >
-        {loading ? 'Starte...' : 'Spiel starten'}
-      </button>
+      {/* START BUTTON (STICKY) */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background to-transparent">
+        <button
+          onClick={handleStart}
+          disabled={state.players.length === 0 || loading}
+          className={`
+            w-full py-6 rounded-2xl text-xl font-semibold transition-all
+            ${
+              state.players.length === 0 || loading
+                ? "bg-overlay text-muted"
+                : "bg-accent text-white shadow-xl active:scale-[0.98]"
+            }
+          `}
+        >
+          {loading ? "Starte..." : "Spiel starten"}
+        </button>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  wrapper: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '24px',
-    padding: '24px',
-    maxWidth: '480px',
-    margin: '0 auto',
-  },
-  title: { fontSize: '1.6rem', textAlign: 'center' as const },
-  section: { display: 'flex', flexDirection: 'column' as const, gap: '10px' },
-  label: { fontSize: '0.9rem', color: '#aaa', textTransform: 'uppercase' as const, letterSpacing: '0.08em' },
-  modeRow: { display: 'flex', gap: '12px' },
-  modeBtn: {
-    flex: 1,
-    padding: '14px',
-    fontSize: '1.2rem',
-    background: '#16213e',
-    color: '#eaeaea',
-    border: '2px solid transparent',
-    borderRadius: '10px',
-    cursor: 'pointer',
-  },
-  modeBtnActive: { borderColor: '#e94560', color: '#e94560' },
-  playerList: { listStyle: 'none', display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  playerItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 16px',
-    background: '#16213e',
-    borderRadius: '10px',
-    fontSize: '1.1rem',
-  },
-  removeBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#e94560',
-    fontSize: '1.1rem',
-    cursor: 'pointer',
-    padding: '4px 8px',
-  },
-  addRow: { display: 'flex', gap: '8px' },
-  input: {
-    flex: 1,
-    padding: '12px 16px',
-    fontSize: '1rem',
-    background: '#16213e',
-    color: '#eaeaea',
-    border: '2px solid #0f3460',
-    borderRadius: '10px',
-    outline: 'none',
-  },
-  addBtn: {
-    padding: '12px 20px',
-    fontSize: '1.4rem',
-    background: '#0f3460',
-    color: '#eaeaea',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-  },
-  startBtn: {
-    padding: '18px',
-    fontSize: '1.2rem',
-    fontWeight: 'bold' as const,
-    background: '#e94560',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    marginTop: '8px',
-  },
-  startBtnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
-};

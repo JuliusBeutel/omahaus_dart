@@ -12,18 +12,8 @@ export function HomePage() {
   }, [navigate]);
 
   return (
-    <div style={styles.center}>
-      <p style={styles.text}>Session wird erstellt...</p>
+    <div className="flex items-center justify-center min-h-screen bg-base">
+      <p className="text-muted text-2xl">Session wird erstellt...</p>
     </div>
   );
 }
-
-const styles = {
-  center: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-  },
-  text: { color: '#aaa', fontSize: '1.4rem' },
-};
