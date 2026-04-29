@@ -63,17 +63,20 @@ export function SetupScreen({ sessionId, state }: Props) {
           ))}
         </ul>
         {state.players.length < 4 && (
-          <div style={styles.addRow}>
+          <form
+            style={styles.addRow}
+            onSubmit={(e) => { e.preventDefault(); handleAddPlayer(); }}
+          >
             <input
               style={styles.input}
               placeholder="Name eingeben"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
               maxLength={20}
+              autoFocus
             />
-            <button style={styles.addBtn} onClick={handleAddPlayer}>+</button>
-          </div>
+            <button type="submit" style={styles.addBtn}>+</button>
+          </form>
         )}
       </div>
 
