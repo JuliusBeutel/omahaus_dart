@@ -25,7 +25,7 @@ export function ControllerPage() {
   if (state.status === 'finished') {
     const winner = state.players.find((p) => p.id === state.winnerId);
     return (
-      <div style={{ ...styles.center, background: '#1a1a2e', minHeight: '100vh' }}>
+      <div style={{ ...styles.center, background: '#0c1a08', minHeight: '100vh' }}>
         <div style={styles.finishBox}>
           <p style={styles.finishLabel}>Spiel beendet</p>
           <p style={styles.finishWinner}>{winner?.name} gewinnt!</p>
@@ -75,30 +75,30 @@ function throwLabel(t: { value: number; multiplier: number }): string {
 function DartIcon() {
   return (
     <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
-      <polygon points="9,0 13,9 5,9" fill="#c8d6e8" />
-      <rect x="8" y="9" width="2" height="14" rx="1" fill="#c8d6e8" />
-      <rect x="6" y="22" width="6" height="2" rx="1" fill="#c8d6e8" />
-      <rect x="7" y="24" width="4" height="2" rx="1" fill="#c8d6e8" />
+      <polygon points="9,0 13,9 5,9" fill="#4a6e42" />
+      <rect x="8" y="9" width="2" height="14" rx="1" fill="#4a6e42" />
+      <rect x="6" y="22" width="6" height="2" rx="1" fill="#4a6e42" />
+      <rect x="7" y="24" width="4" height="2" rx="1" fill="#4a6e42" />
     </svg>
   );
 }
 
 const styles = {
   page: {
-    background: '#1a1a2e',
+    background: '#0c1a08',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column' as const,
   },
   scoreCard: {
-    background: '#16213e',
+    background: '#162e0f',
     textAlign: 'center' as const,
     padding: '24px 16px 20px',
-    borderBottom: '1px solid #0f3460',
+    borderBottom: '1px solid #253d18',
   },
   playerName: {
     fontSize: '1.1rem',
-    color: '#4f86f7',
+    color: '#d3e8cb',
     fontWeight: '600' as const,
     margin: 0,
     marginBottom: '4px',
@@ -106,7 +106,7 @@ const styles = {
   score: {
     fontSize: '4rem',
     fontWeight: 'bold' as const,
-    color: '#eaeaea',
+    color: '#d3e8cb',
     margin: 0,
     lineHeight: 1.1,
   },
@@ -119,7 +119,7 @@ const styles = {
   slot: {
     width: '72px',
     height: '44px',
-    background: '#0f3460',
+    background: '#253d18',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
@@ -128,7 +128,7 @@ const styles = {
   slotValue: {
     fontSize: '1.1rem',
     fontWeight: '700' as const,
-    color: '#eaeaea',
+    color: '#d3e8cb',
   },
   center: {
     display: 'flex',
@@ -136,7 +136,7 @@ const styles = {
     justifyContent: 'center',
     padding: '24px',
   },
-  info: { color: '#8896a9', fontSize: '1.1rem' },
+  info: { color: '#aeaeae', fontSize: '1.1rem' },
   finishBox: {
     display: 'flex',
     flexDirection: 'column' as const,
@@ -144,14 +144,14 @@ const styles = {
     gap: '20px',
     textAlign: 'center' as const,
   },
-  finishLabel: { fontSize: '1rem', color: '#8896a9' },
-  finishWinner: { fontSize: '2rem', fontWeight: 'bold' as const, color: '#4f86f7' },
+  finishLabel: { fontSize: '1rem', color: '#aeaeae' },
+  finishWinner: { fontSize: '2rem', fontWeight: 'bold' as const, color: '#d3e8cb' },
   resetBtn: {
     padding: '16px 40px',
     fontSize: '1.1rem',
     fontWeight: 'bold' as const,
-    background: '#4f86f7',
-    color: '#fff',
+    background: '#2a5518',
+    color: '#d3e8cb',
     border: 'none',
     borderRadius: '12px',
     cursor: 'pointer',

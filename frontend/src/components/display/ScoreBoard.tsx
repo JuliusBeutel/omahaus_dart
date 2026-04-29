@@ -37,7 +37,7 @@ const styles = {
   card: {
     flex: '1 1 180px',
     maxWidth: '240px',
-    background: '#16213e',
+    background: '#162e0f',
     borderRadius: '16px',
     padding: '24px',
     textAlign: 'center' as const,
@@ -45,20 +45,21 @@ const styles = {
     transition: 'border-color 0.2s',
   },
   active: {
-    borderColor: '#e94560',
+    borderColor: '#5a9050',
   },
   name: {
     fontSize: '1.2rem',
-    color: '#aaa',
+    color: '#aeaeae',
     marginBottom: '8px',
   },
   score: {
     fontSize: '3.5rem',
     fontWeight: 'bold' as const,
     letterSpacing: '-2px',
+    color: '#d3e8cb',
   },
   empty: {
-    color: '#aaa',
+    color: '#aeaeae',
     fontSize: '1.4rem',
   },
 };

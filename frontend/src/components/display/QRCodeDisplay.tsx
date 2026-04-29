@@ -21,7 +21,7 @@ export function QRCodeDisplay({ sessionId }: Props) {
 
   return (
     <div style={styles.wrapper}>
-      <QRCodeSVG value={url} size={220} bgColor="#ffffff" fgColor="#1a1a2e" />
+      <QRCodeSVG value={url} size={220} bgColor="#ffffff" fgColor="#0c1a08" />
       <p style={styles.label}>Session: <strong>{sessionId}</strong></p>
       <p style={styles.hint}>Scan zum Beitreten</p>
     </div>
@@ -35,9 +35,10 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
     padding: '24px',
-    background: '#16213e',
+    background: '#162e0f',
     borderRadius: '16px',
+    color: '#d3e8cb',
   },
   label: { fontSize: '1.2rem', letterSpacing: '0.1em' },
-  hint: { fontSize: '0.9rem', color: '#aaa' },
+  hint: { fontSize: '0.9rem', color: '#aeaeae' },
 };

@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom';
 import { useGameState } from '../hooks/useGameState';
 import { ScoreBoard } from '../components/display/ScoreBoard';
-import { CurrentThrows } from '../components/display/CurrentThrows';
 import { QRCodeDisplay } from '../components/display/QRCodeDisplay';
+import { PlayerCard } from '../components/display/PlayerCard';
 
 export function DisplayPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,22 +35,32 @@ export function DisplayPage() {
     );
   }
 
+  if (state.status === 'playing') {
+    const cols = state.players.length === 4 ? 2 : state.players.length;
+    return (
+      <div style={{ ...styles.matchGrid, gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        {state.players.map((player, i) => (
+          <PlayerCard
+            key={player.id}
+            player={player}
+            isActive={i === state.currentPlayerIndex}
+            throws={i === state.currentPlayerIndex ? state.currentTurn.throws : []}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div style={styles.page}>
       <div style={styles.left}>
         <QRCodeDisplay sessionId={id} />
-        {state.status === 'playing' && (
-          <CurrentThrows
-            throws={state.currentTurn.throws}
-            currentPlayerName={state.players[state.currentPlayerIndex]?.name ?? ''}
-          />
-        )}
       </div>
       <div style={styles.right}>
         <ScoreBoard
           players={state.players}
           currentPlayerIndex={state.currentPlayerIndex}
-          isPlaying={state.status === 'playing'}
+          isPlaying={false}
         />
       </div>
     </div>
@@ -58,14 +68,22 @@ export function DisplayPage() {
 }
 
 const styles = {
+  matchGrid: {
+    display: 'grid',
+    gap: 0,
+    padding: 0,
+    height: '100vh',
+    background: '#0c1a08',
+    alignItems: 'stretch',
+  },
   page: {
     display: 'flex',
     gap: '40px',
     padding: '40px',
     minHeight: '100vh',
     alignItems: 'flex-start',
-    background: '#1a1a2e',
-    color: '#eaeaea',
+    background: '#0c1a08',
+    color: '#d3e8cb',
   },
   left: {
     display: 'flex',
@@ -85,17 +103,17 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    background: '#1a1a2e',
-    color: '#eaeaea',
+    background: '#0c1a08',
+    color: '#d3e8cb',
   },
-  connecting: { color: '#aaa', fontSize: '1.4rem' },
+  connecting: { color: '#aeaeae', fontSize: '1.4rem' },
   winnerBox: {
     textAlign: 'center' as const,
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '16px',
   },
-  winnerLabel: { fontSize: '1.4rem', color: '#aaa', textTransform: 'uppercase' as const, letterSpacing: '0.1em' },
-  winnerName: { fontSize: '5rem', fontWeight: 'bold' as const, color: '#e94560' },
-  avg: { fontSize: '1.6rem', color: '#eaeaea' },
+  winnerLabel: { fontSize: '1.4rem', color: '#aeaeae', textTransform: 'uppercase' as const, letterSpacing: '0.1em' },
+  winnerName: { fontSize: '5rem', fontWeight: 'bold' as const, color: '#d3e8cb' },
+  avg: { fontSize: '1.6rem', color: '#d3e8cb' },
 };

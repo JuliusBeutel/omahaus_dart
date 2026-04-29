@@ -13,7 +13,7 @@ function Dots({ count }: { count: number }) {
   return (
     <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', marginTop: '5px' }}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4f86f7' }} />
+        <div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#d3e8cb' }} />
       ))}
     </div>
   );
@@ -115,7 +115,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '10px',
-    background: '#1a1a2e',
+    background: '#0c1a08',
   },
   toggleRow: {
     display: 'grid',
@@ -126,16 +126,16 @@ const styles = {
     padding: '14px',
     fontSize: '1rem',
     fontWeight: '600' as const,
-    background: '#16213e',
-    color: '#8896a9',
-    border: '1.5px solid #0f3460',
+    background: '#162e0f',
+    color: '#aeaeae',
+    border: '1.5px solid #253d18',
     borderRadius: '12px',
     cursor: 'pointer',
   },
   toggleActive: {
-    background: '#0f3460',
-    color: '#4f86f7',
-    borderColor: '#4f86f7',
+    background: '#253d18',
+    color: '#d3e8cb',
+    borderColor: '#5a9050',
   },
   grid: {
     display: 'grid',
@@ -144,8 +144,8 @@ const styles = {
   },
   numBtn: {
     padding: '14px 0',
-    background: '#16213e',
-    border: '1.5px solid #0f3460',
+    background: '#162e0f',
+    border: '1.5px solid #253d18',
     borderRadius: '12px',
     cursor: 'pointer',
     display: 'flex',
@@ -157,13 +157,13 @@ const styles = {
   numText: {
     fontSize: '1.25rem',
     fontWeight: '600' as const,
-    color: '#eaeaea',
+    color: '#d3e8cb',
     lineHeight: 1,
   },
   undoBtn: {
-    background: '#0f3460',
-    color: '#8896a9',
-    borderColor: '#1a3a6e',
+    background: '#253d18',
+    color: '#aeaeae',
+    borderColor: '#3a5a2a',
   },
   dimmed: {
     opacity: 0.3,
