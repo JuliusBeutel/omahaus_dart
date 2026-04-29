@@ -4,38 +4,47 @@ import * as api from '../../api/client';
 
 interface Props {
   sessionId: string;
+  canUndo: boolean;
 }
 
-const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const NUMBERS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
 
-export function DartInput({ sessionId }: Props) {
+export function DartInput({ sessionId, canUndo }: Props) {
   const [multiplier, setMultiplier] = useState<Multiplier>(1);
   const [pending, setPending] = useState(false);
 
-  async function handleThrow(value: number, overrideMultiplier?: Multiplier) {
+  async function handleThrow(value: number) {
     if (pending) return;
-    const m = overrideMultiplier ?? multiplier;
     setPending(true);
-    await api.throwDart(sessionId, value, m);
+    await api.throwDart(sessionId, value, multiplier);
+    setMultiplier(1);
     setPending(false);
   }
 
-  const multipliers: { label: string; value: Multiplier }[] = [
-    { label: 'Single', value: 1 },
-    { label: 'Double', value: 2 },
-    { label: 'Triple', value: 3 },
-  ];
+  function toggleMultiplier(m: 2 | 3) {
+    setMultiplier((prev) => (prev === m ? 1 : m));
+  }
+
+  function Dots({ count }: { count: number }) {
+    return (
+      <div style={dotRow}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} style={dot} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div style={styles.wrapper}>
-      <div style={styles.multiplierRow}>
-        {multipliers.map((m) => (
+      <div style={styles.toggleRow}>
+        {([2, 3] as const).map((m) => (
           <button
-            key={m.value}
-            style={{ ...styles.multiplierBtn, ...(multiplier === m.value ? styles.multiplierActive : {}) }}
-            onClick={() => setMultiplier(m.value)}
+            key={m}
+            style={{ ...styles.toggleBtn, ...(multiplier === m ? styles.toggleActive : {}) }}
+            onClick={() => toggleMultiplier(m)}
           >
-            {m.label}
+            {m === 2 ? 'Double' : 'Triple'}
           </button>
         ))}
       </div>
@@ -44,90 +53,125 @@ export function DartInput({ sessionId }: Props) {
         {NUMBERS.map((n) => (
           <button
             key={n}
-            style={styles.numBtn}
+            style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
             onClick={() => handleThrow(n)}
             disabled={pending}
           >
-            {n}
+            <span style={styles.numText}>{n}</span>
+            {multiplier > 1 && <Dots count={multiplier} />}
           </button>
         ))}
-      </div>
 
-      <div style={styles.bullRow}>
         <button
-          style={{ ...styles.bullBtn }}
-          onClick={() => handleThrow(25, 1)}
+          style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
+          onClick={() => handleThrow(0)}
           disabled={pending}
         >
-          Bull
-          <span style={styles.bullSub}>25</span>
+          <span style={styles.numText}>0</span>
+          {multiplier > 1 && <Dots count={multiplier} />}
         </button>
+
         <button
-          style={{ ...styles.bullBtn, ...styles.bullDouble }}
-          onClick={() => handleThrow(25, 2)}
+          style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
+          onClick={() => handleThrow(25)}
           disabled={pending}
         >
-          Bull's Eye
-          <span style={styles.bullSub}>50</span>
+          <span style={styles.numText}>25</span>
+          {multiplier > 1 && <Dots count={multiplier} />}
+        </button>
+
+        <button
+          style={{
+            ...styles.numBtn,
+            ...styles.undoBtn,
+            gridColumn: 'span 2',
+            ...(!canUndo ? styles.dimmed : {}),
+          }}
+          onClick={() => api.undoThrow(sessionId)}
+          disabled={!canUndo}
+        >
+          <span style={styles.undoText}>zurück</span>
         </button>
       </div>
     </div>
   );
 }
 
+const dotRow: React.CSSProperties = {
+  display: 'flex',
+  gap: '3px',
+  justifyContent: 'center',
+  marginTop: '4px',
+};
+
+const dot: React.CSSProperties = {
+  width: '5px',
+  height: '5px',
+  borderRadius: '50%',
+  background: '#4f86f7',
+};
+
 const styles = {
   wrapper: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '16px',
-    padding: '16px',
-    maxWidth: '480px',
-    margin: '0 auto',
-  },
-  multiplierRow: { display: 'flex', gap: '8px' },
-  multiplierBtn: {
     flex: 1,
     padding: '12px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+  },
+  toggleRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '10px',
+  },
+  toggleBtn: {
+    padding: '14px',
     fontSize: '1rem',
-    background: '#16213e',
-    color: '#eaeaea',
-    border: '2px solid transparent',
-    borderRadius: '10px',
+    fontWeight: '600' as const,
+    background: '#fff',
+    color: '#8896a9',
+    border: '1.5px solid #e2e8f5',
+    borderRadius: '12px',
     cursor: 'pointer',
   },
-  multiplierActive: { borderColor: '#e94560', color: '#e94560' },
+  toggleActive: {
+    background: '#eef3ff',
+    color: '#4f86f7',
+    borderColor: '#4f86f7',
+  },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '8px',
   },
   numBtn: {
-    padding: '18px 0',
-    fontSize: '1.3rem',
-    fontWeight: 'bold' as const,
-    background: '#0f3460',
-    color: '#eaeaea',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'opacity 0.1s',
-  },
-  bullRow: { display: 'flex', gap: '8px' },
-  bullBtn: {
-    flex: 1,
-    padding: '18px',
-    fontSize: '1.1rem',
-    fontWeight: 'bold' as const,
-    background: '#0f3460',
-    color: '#eaeaea',
-    border: 'none',
-    borderRadius: '10px',
+    padding: '14px 0',
+    background: '#fff',
+    border: '1.5px solid #e2e8f5',
+    borderRadius: '12px',
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
-    gap: '4px',
+    justifyContent: 'center',
+    minHeight: '56px',
   },
-  bullDouble: { background: '#16213e', border: '2px solid #0f3460' },
-  bullSub: { fontSize: '0.85rem', color: '#aaa' },
+  numText: {
+    fontSize: '1.25rem',
+    fontWeight: '600' as const,
+    color: '#1e2d4a',
+    lineHeight: 1,
+  },
+  undoBtn: {
+    background: '#f5f7ff',
+    borderColor: '#dde4f5',
+  },
+  undoText: {
+    fontSize: '1rem',
+    fontWeight: '600' as const,
+    color: '#8896a9',
+  },
+  dimmed: {
+    opacity: 0.4,
+  },
 };
