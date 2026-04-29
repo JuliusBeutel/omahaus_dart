@@ -20,6 +20,13 @@ export interface Turn {
   throws: DartThrow[];
 }
 
+export interface CompletedTurn {
+  playerIndex: number;
+  startScore: number;
+  throws: DartThrow[];
+  wasBust: boolean;
+}
+
 export interface GameState {
   sessionId: string;
   mode: GameMode;
@@ -27,5 +34,6 @@ export interface GameState {
   players: Player[];
   currentPlayerIndex: number;
   currentTurn: Turn;
+  turnHistory: CompletedTurn[];
   winnerId?: string;
 }

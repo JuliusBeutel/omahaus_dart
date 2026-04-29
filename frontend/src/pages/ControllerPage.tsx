@@ -25,7 +25,7 @@ export function ControllerPage() {
   if (state.status === 'finished') {
     const winner = state.players.find((p) => p.id === state.winnerId);
     return (
-      <div style={{ ...styles.center, background: '#f5f7ff', minHeight: '100vh' }}>
+      <div style={{ ...styles.center, background: '#1a1a2e', minHeight: '100vh' }}>
         <div style={styles.finishBox}>
           <p style={styles.finishLabel}>Spiel beendet</p>
           <p style={styles.finishWinner}>{winner?.name} gewinnt!</p>
@@ -38,6 +38,8 @@ export function ControllerPage() {
   }
 
   const currentPlayer = state.players[state.currentPlayerIndex];
+  // Undo is possible as long as at least one throw has ever been made this game
+  const canUndo = state.currentTurn.throws.length > 0 || state.turnHistory.length > 0;
 
   return (
     <div style={styles.page}>
@@ -59,10 +61,7 @@ export function ControllerPage() {
           })}
         </div>
       </div>
-      <DartInput
-        sessionId={id}
-        canUndo={state.currentTurn.throws.length > 0}
-      />
+      <DartInput sessionId={id} canUndo={canUndo} />
     </div>
   );
 }
@@ -86,16 +85,16 @@ function DartIcon() {
 
 const styles = {
   page: {
-    background: '#f5f7ff',
+    background: '#1a1a2e',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column' as const,
   },
   scoreCard: {
-    background: '#fff',
+    background: '#16213e',
     textAlign: 'center' as const,
     padding: '24px 16px 20px',
-    borderBottom: '1px solid #e8edf5',
+    borderBottom: '1px solid #0f3460',
   },
   playerName: {
     fontSize: '1.1rem',
@@ -107,7 +106,7 @@ const styles = {
   score: {
     fontSize: '4rem',
     fontWeight: 'bold' as const,
-    color: '#1e2d4a',
+    color: '#eaeaea',
     margin: 0,
     lineHeight: 1.1,
   },
@@ -120,7 +119,7 @@ const styles = {
   slot: {
     width: '72px',
     height: '44px',
-    background: '#f0f4ff',
+    background: '#0f3460',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
@@ -129,7 +128,7 @@ const styles = {
   slotValue: {
     fontSize: '1.1rem',
     fontWeight: '700' as const,
-    color: '#1e2d4a',
+    color: '#eaeaea',
   },
   center: {
     display: 'flex',

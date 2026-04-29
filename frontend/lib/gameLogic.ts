@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { GameState, GameMode, Multiplier, DartThrow, Player } from './types.js';
+import type { GameState, GameMode, Multiplier, DartThrow, Player, CompletedTurn } from './types.js';
 
 export function createSession(sessionId: string): GameState {
   return {
@@ -9,6 +9,7 @@ export function createSession(sessionId: string): GameState {
     players: [],
     currentPlayerIndex: 0,
     currentTurn: { startScore: 0, throws: [] },
+    turnHistory: [],
   };
 }
 
@@ -35,15 +36,23 @@ export function startGame(state: GameState): GameState {
     players,
     currentPlayerIndex: 0,
     currentTurn: { startScore: state.mode, throws: [] },
+    turnHistory: [],
   };
 }
 
-function advanceToNextPlayer(state: GameState): GameState {
+function advanceToNextPlayer(state: GameState, wasBust: boolean): GameState {
+  const completed: CompletedTurn = {
+    playerIndex: state.currentPlayerIndex,
+    startScore: state.currentTurn.startScore,
+    throws: state.currentTurn.throws,
+    wasBust,
+  };
   const nextIndex = (state.currentPlayerIndex + 1) % state.players.length;
   return {
     ...state,
     currentPlayerIndex: nextIndex,
     currentTurn: { startScore: state.players[nextIndex].score, throws: [] },
+    turnHistory: [...state.turnHistory, completed],
   };
 }
 
@@ -56,10 +65,17 @@ export function applyThrow(state: GameState, value: number, multiplier: Multipli
   const isBust = newScore < 0 || newScore === 1 || (newScore === 0 && multiplier !== 2);
 
   if (isBust) {
+    // Store the bust dart in the turn so it can be undone
+    const bustThrow: DartThrow = { value, multiplier, points };
     const players = state.players.map((p, i) =>
       i === playerIndex ? { ...p, score: state.currentTurn.startScore } : p
     );
-    return advanceToNextPlayer({ ...state, players });
+    const stateWithBust = {
+      ...state,
+      players,
+      currentTurn: { ...state.currentTurn, throws: [...state.currentTurn.throws, bustThrow] },
+    };
+    return advanceToNextPlayer(stateWithBust, true);
   }
 
   const dartThrow: DartThrow = { value, multiplier, points };
@@ -79,21 +95,61 @@ export function applyThrow(state: GameState, value: number, multiplier: Multipli
   }
 
   const next = { ...state, players, currentTurn: { ...state.currentTurn, throws: newThrows } };
-  return newThrows.length >= 3 ? advanceToNextPlayer(next) : next;
+  return newThrows.length >= 3 ? advanceToNextPlayer(next, false) : next;
 }
 
 export function undoLastThrow(state: GameState): GameState {
   const { throws } = state.currentTurn;
-  if (throws.length === 0) return state;
 
-  const lastThrow = throws[throws.length - 1];
-  const playerIndex = state.currentPlayerIndex;
+  if (throws.length > 0) {
+    // Undo within current turn
+    const lastThrow = throws[throws.length - 1];
+    const playerIndex = state.currentPlayerIndex;
+    const players = state.players.map((p, i) =>
+      i === playerIndex
+        ? { ...p, score: p.score + lastThrow.points, dartsThrown: Math.max(0, p.dartsThrown - 1) }
+        : p
+    );
+    return { ...state, players, currentTurn: { ...state.currentTurn, throws: throws.slice(0, -1) } };
+  }
+
+  // No throws in current turn — go back to previous player's last throw
+  if (state.turnHistory.length === 0) return state;
+
+  const history = [...state.turnHistory];
+  const prevTurn = history.pop()!;
+  const prevThrows = prevTurn.throws;
+  if (prevThrows.length === 0) return state;
+
+  const lastThrow = prevThrows[prevThrows.length - 1];
+  const remainingThrows = prevThrows.slice(0, -1);
+  const prevPlayer = state.players[prevTurn.playerIndex];
+
+  let restoredScore: number;
+  let restoredDartsThrown: number;
+
+  if (prevTurn.wasBust) {
+    // Score was reset to startScore on bust; restore to what it was before the last throw
+    restoredScore = prevTurn.startScore - remainingThrows.reduce((s, t) => s + t.points, 0);
+    restoredDartsThrown = prevPlayer.dartsThrown; // bust throws were never counted
+  } else {
+    restoredScore = prevPlayer.score + lastThrow.points;
+    restoredDartsThrown = Math.max(0, prevPlayer.dartsThrown - 1);
+  }
+
   const players = state.players.map((p, i) =>
-    i === playerIndex
-      ? { ...p, score: p.score + lastThrow.points, dartsThrown: Math.max(0, p.dartsThrown - 1) }
+    i === prevTurn.playerIndex
+      ? { ...p, score: restoredScore, dartsThrown: restoredDartsThrown }
       : p
   );
-  return { ...state, players, currentTurn: { ...state.currentTurn, throws: throws.slice(0, -1) } };
+
+  return {
+    ...state,
+    players,
+    currentPlayerIndex: prevTurn.playerIndex,
+    currentTurn: { startScore: prevTurn.startScore, throws: remainingThrows },
+    turnHistory: history,
+  };
 }
 
 export function resetGame(state: GameState): GameState {
@@ -104,6 +160,7 @@ export function resetGame(state: GameState): GameState {
     players,
     currentPlayerIndex: 0,
     currentTurn: { startScore: 0, throws: [] },
+    turnHistory: [],
     winnerId: undefined,
   };
 }

@@ -9,14 +9,33 @@ interface Props {
 
 const NUMBERS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
 
+function Dots({ count }: { count: number }) {
+  return (
+    <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', marginTop: '5px' }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4f86f7' }} />
+      ))}
+    </div>
+  );
+}
+
+function BackArrow() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5" />
+      <path d="M12 5l-7 7 7 7" />
+    </svg>
+  );
+}
+
 export function DartInput({ sessionId, canUndo }: Props) {
   const [multiplier, setMultiplier] = useState<Multiplier>(1);
   const [pending, setPending] = useState(false);
 
-  async function handleThrow(value: number) {
+  async function handleThrow(value: number, forceMultiplier?: Multiplier) {
     if (pending) return;
     setPending(true);
-    await api.throwDart(sessionId, value, multiplier);
+    await api.throwDart(sessionId, value, forceMultiplier ?? multiplier);
     setMultiplier(1);
     setPending(false);
   }
@@ -25,15 +44,7 @@ export function DartInput({ sessionId, canUndo }: Props) {
     setMultiplier((prev) => (prev === m ? 1 : m));
   }
 
-  function Dots({ count }: { count: number }) {
-    return (
-      <div style={dotRow}>
-        {Array.from({ length: count }).map((_, i) => (
-          <div key={i} style={dot} />
-        ))}
-      </div>
-    );
-  }
+  const bull25Disabled = pending || multiplier === 3;
 
   return (
     <div style={styles.wrapper}>
@@ -72,12 +83,12 @@ export function DartInput({ sessionId, canUndo }: Props) {
         </button>
 
         <button
-          style={{ ...styles.numBtn, ...(pending ? styles.dimmed : {}) }}
+          style={{ ...styles.numBtn, ...(bull25Disabled ? styles.dimmed : {}) }}
           onClick={() => handleThrow(25)}
-          disabled={pending}
+          disabled={bull25Disabled}
         >
           <span style={styles.numText}>25</span>
-          {multiplier > 1 && <Dots count={multiplier} />}
+          {multiplier === 2 && <Dots count={2} />}
         </button>
 
         <button
@@ -90,26 +101,12 @@ export function DartInput({ sessionId, canUndo }: Props) {
           onClick={() => api.undoThrow(sessionId)}
           disabled={!canUndo}
         >
-          <span style={styles.undoText}>zurück</span>
+          <BackArrow />
         </button>
       </div>
     </div>
   );
 }
-
-const dotRow: React.CSSProperties = {
-  display: 'flex',
-  gap: '3px',
-  justifyContent: 'center',
-  marginTop: '4px',
-};
-
-const dot: React.CSSProperties = {
-  width: '5px',
-  height: '5px',
-  borderRadius: '50%',
-  background: '#4f86f7',
-};
 
 const styles = {
   wrapper: {
@@ -118,6 +115,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '10px',
+    background: '#1a1a2e',
   },
   toggleRow: {
     display: 'grid',
@@ -128,14 +126,14 @@ const styles = {
     padding: '14px',
     fontSize: '1rem',
     fontWeight: '600' as const,
-    background: '#fff',
+    background: '#16213e',
     color: '#8896a9',
-    border: '1.5px solid #e2e8f5',
+    border: '1.5px solid #0f3460',
     borderRadius: '12px',
     cursor: 'pointer',
   },
   toggleActive: {
-    background: '#eef3ff',
+    background: '#0f3460',
     color: '#4f86f7',
     borderColor: '#4f86f7',
   },
@@ -146,8 +144,8 @@ const styles = {
   },
   numBtn: {
     padding: '14px 0',
-    background: '#fff',
-    border: '1.5px solid #e2e8f5',
+    background: '#16213e',
+    border: '1.5px solid #0f3460',
     borderRadius: '12px',
     cursor: 'pointer',
     display: 'flex',
@@ -159,19 +157,15 @@ const styles = {
   numText: {
     fontSize: '1.25rem',
     fontWeight: '600' as const,
-    color: '#1e2d4a',
+    color: '#eaeaea',
     lineHeight: 1,
   },
   undoBtn: {
-    background: '#f5f7ff',
-    borderColor: '#dde4f5',
-  },
-  undoText: {
-    fontSize: '1rem',
-    fontWeight: '600' as const,
+    background: '#0f3460',
     color: '#8896a9',
+    borderColor: '#1a3a6e',
   },
   dimmed: {
-    opacity: 0.4,
+    opacity: 0.3,
   },
 };
