@@ -1,19 +1,21 @@
 {
   "permissions": {
     "allow": [
+      "Bash(git ls-tree *)",
+      "Bash(git checkout *)",
+      "Bash(xargs -I{} cat {})",
       "Bash(npm install *)",
-      "Bash(npx tsc *)",
+      "Bash(vercel dev *)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(npx --yes vercel --version)",
+      "Bash(npx vercel *)",
+      "Bash(pkill -f \"vercel dev\")",
       "Bash(npm run *)",
-      "Bash(curl -s -X POST http://localhost:3001/api/sessions)",
-      "Bash(kill %1)",
-      "Bash(node -e \"const {networkInterfaces}=require\\('os'\\);const nets=networkInterfaces\\(\\);for\\(const ifaces of Object.values\\(nets\\)\\){for\\(const i of ifaces??[]\\){if\\(i.family==='IPv4'&&!i.internal\\){console.log\\(i.address\\);process.exit\\(0\\)}}}\")",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)",
-      "Bash(git push *)",
-      "Bash(git rm *)",
-      "Bash(npx vite *)",
-      "Bash(node -e \"const p = require\\('/Users/juliusbeutel/Projects/omahaus_dart/frontend/node_modules/@tailwindcss/vite/package.json'\\); console.log\\('version:', p.version, 'peerDeps:', JSON.stringify\\(p.peerDependencies\\)\\)\")",
-      "Bash(node -e \"console.log\\(require\\('/Users/juliusbeutel/Projects/omahaus_dart/frontend/node_modules/vite/package.json'\\).version\\)\")"
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npx tsc *)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(curl -s http://localhost:3001/api/local-ip)",
+      "Bash(curl -s http://192.168.178.65:5173)"
     ]
   }
 }

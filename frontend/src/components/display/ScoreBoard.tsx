@@ -1,25 +1,25 @@
 import type { Player } from '../../types/game';
 
-interface Props {
+interface ScoreBoardProps {
   players: Player[];
+  mode: 301 | 501;
 }
 
-export function ScoreBoard({ players }: Props) {
-  if (players.length === 0) {
-    return <p className="text-muted text-2xl">Warte auf Spieler...</p>;
-  }
-
+export default function ScoreBoard({ players, mode }: ScoreBoardProps) {
   return (
-    <div className="flex gap-6 flex-wrap justify-center w-full">
-      {players.map((player) => (
-        <div
-          key={player.id}
-          className="flex-1 basis-44 max-w-60 bg-surface rounded-2xl p-6 text-center"
-        >
-          <p className="text-muted text-lg mb-2">{player.name}</p>
-          <p className="text-primary text-5xl font-bold tracking-tight">{player.score}</p>
-        </div>
-      ))}
+    <div className="flex flex-col items-center justify-center h-full gap-6">
+      <h2 className="text-2xl font-bold text-primary">{mode} — Setup</h2>
+      <ul className="flex flex-col gap-3 w-full max-w-xs">
+        {players.map((p, i) => (
+          <li
+            key={p.id}
+            className="flex items-center gap-3 bg-surface border border-accent rounded-lg px-4 py-3"
+          >
+            <span className="text-muted text-sm w-5">{i + 1}.</span>
+            <span className="text-primary font-medium">{p.name}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

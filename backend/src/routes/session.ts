@@ -1,85 +1,120 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import * as store from '../services/sessionStore';
-import * as logic from '../services/gameLogic';
-import * as sse from '../sse/sseManager';
-import type { GameMode, GameState, Multiplier } from '../types/game';
+import { getSession, setSession, deleteSession } from '../services/sessionStore';
+import {
+  createGame,
+  addPlayer,
+  removePlayer,
+  reorderPlayers,
+  setMode,
+  startGame,
+  processThrow,
+  undoLastThrow,
+  resetGame,
+} from '../services/gameLogic';
+import type { GameMode, Multiplier } from '../types/game';
+import os from 'os';
 
 const router = Router();
 
-function getSession(res: Response, sessionId: string) {
-  const state = store.get(sessionId);
-  if (!state) {
-    res.status(404).json({ error: 'Session not found' });
-    return null;
-  }
-  return state;
-}
-
-function mutate(
-  res: Response,
-  sessionId: string,
-  updater: (s: GameState) => GameState
-) {
-  const state = getSession(res, sessionId);
-  if (!state) return;
-  const next = updater(state);
-  store.set(next);
-  sse.broadcast(sessionId, next);
-  res.json(next);
-}
-
-router.post('/', (_req: Request, res: Response) => {
-  const sessionId = uuidv4().slice(0, 6).toUpperCase();
-  const state = logic.createSession(sessionId);
-  store.set(state);
+router.post('/sessions', (req, res) => {
+  const sessionId = uuidv4();
+  const state = createGame(sessionId);
+  setSession(sessionId, state);
   res.status(201).json({ sessionId });
 });
 
-router.get('/:id', (req: Request, res: Response) => {
-  const state = getSession(res, req.params.id);
-  if (state) res.json(state);
+router.get('/sessions/:id', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  res.json(state);
 });
 
-router.get('/:id/events', (req: Request, res: Response) => {
-  const state = getSession(res, req.params.id);
-  if (!state) return;
-  sse.subscribe(req.params.id, res);
-  res.write(`data: ${JSON.stringify(state)}\n\n`);
+router.delete('/sessions/:id', (req, res) => {
+  deleteSession(req.params.id);
+  res.status(204).end();
 });
 
-router.post('/:id/players', (req: Request, res: Response) => {
-  const { name } = req.body as { name: string };
-  if (!name?.trim()) { res.status(400).json({ error: 'Name required' }); return; }
-  mutate(res, req.params.id, (s) => logic.addPlayer(s, name.trim()));
-});
-
-router.delete('/:id/players/:playerId', (req: Request, res: Response) => {
-  mutate(res, req.params.id, (s) => logic.removePlayer(s, req.params.playerId));
-});
-
-router.patch('/:id/mode', (req: Request, res: Response) => {
-  const { mode } = req.body as { mode: GameMode };
-  if (mode !== 301 && mode !== 501) { res.status(400).json({ error: 'Mode must be 301 or 501' }); return; }
-  mutate(res, req.params.id, (s) => logic.setMode(s, mode));
-});
-
-router.post('/:id/start', (req: Request, res: Response) => {
-  mutate(res, req.params.id, (s) => logic.startGame(s));
-});
-
-router.post('/:id/throw', (req: Request, res: Response) => {
+router.post('/sessions/:id/throw', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
   const { value, multiplier } = req.body as { value: number; multiplier: Multiplier };
-  if (!value || !multiplier) { res.status(400).json({ error: 'value and multiplier required' }); return; }
-  mutate(res, req.params.id, (s) => logic.applyThrow(s, value, multiplier));
+  const newState = processThrow(state, value, multiplier);
+  setSession(req.params.id, newState);
+  res.json(newState);
 });
 
-router.post('/:id/undo', (req: Request, res: Response) => {
-  mutate(res, req.params.id, (s) => logic.undoLastThrow(s));
+router.post('/sessions/:id/undo', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  const newState = undoLastThrow(state);
+  setSession(req.params.id, newState);
+  res.json(newState);
 });
 
-router.post('/:id/reset', (req: Request, res: Response) => {
-  mutate(res, req.params.id, (s) => logic.resetGame(s));
+router.patch('/sessions/:id/mode', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  const { mode } = req.body as { mode: GameMode };
+  const newState = setMode(state, mode);
+  setSession(req.params.id, newState);
+  res.json(newState);
+});
+
+router.post('/sessions/:id/start', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  const newState = startGame(state);
+  setSession(req.params.id, newState);
+  res.json(newState);
+});
+
+router.post('/sessions/:id/reset', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  const newState = resetGame(state);
+  setSession(req.params.id, newState);
+  res.json(newState);
+});
+
+router.post('/sessions/:id/players', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  const { name } = req.body as { name: string };
+  const newState = addPlayer(state, name);
+  setSession(req.params.id, newState);
+  res.json(newState);
+});
+
+router.delete('/sessions/:id/players/:playerId', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  const newState = removePlayer(state, req.params.playerId);
+  setSession(req.params.id, newState);
+  res.json(newState);
+});
+
+router.post('/sessions/:id/players/reorder', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  const { orderedIds } = req.body as { orderedIds: string[] };
+  const newState = reorderPlayers(state, orderedIds);
+  setSession(req.params.id, newState);
+  res.json(newState);
+});
+
+router.get('/local-ip', (_req, res) => {
+  const nets = os.networkInterfaces();
+  let localIp = 'localhost';
+  for (const iface of Object.values(nets)) {
+    for (const net of iface ?? []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        localIp = net.address;
+        break;
+      }
+    }
+  }
+  res.json({ ip: localIp });
 });
 
 export default router;

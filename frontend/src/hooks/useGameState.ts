@@ -1,30 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { GameState } from '../types/game';
+import { getSession } from '../api/client';
 
-export function useGameState(sessionId: string | null): GameState | null {
+export function useGameState(sessionId: string): { state: GameState | null; notFound: boolean } {
   const [state, setState] = useState<GameState | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const hasLoadedRef = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!sessionId) return;
-
     let active = true;
 
     async function poll() {
       try {
-        const res = await fetch(`/api/sessions/${sessionId}`);
-        if (res.ok && active) setState(await res.json() as GameState);
-      } catch {
-        // network error — keep last state, retry on next tick
+        const data = await getSession(sessionId);
+        if (active) {
+          setState(data);
+          hasLoadedRef.current = true;
+        }
+      } catch (err) {
+        if (active && hasLoadedRef.current && err instanceof Error && err.message === 'API error 404') {
+          setNotFound(true);
+        }
       }
     }
 
     poll();
-    const interval = setInterval(poll, 800);
+    intervalRef.current = setInterval(poll, 800);
+
     return () => {
       active = false;
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [sessionId]);
 
-  return state;
+  return { state, notFound };
 }

@@ -214,7 +214,7 @@ Hier ist dein Abschnitt sauber umgeschrieben mit deinem tatsächlichen Flow (QR-
 7. **Playing — controller**:
    The controller UI is fully structured as a **grid-based layout optimized for touch input**.
 
-- **Top-left**: an **Exit button** allows the user to leave the current session and navigate back to the home screen.
+- **Top-left**: an **Exit button** allows the user to leave the current session and navigate back to the Setup screen. The players should still be there. The display should also go back to the setup screen and show the existing players again.
 
 - **Score display (top section)**:
   A **4×2 grid area** showing:

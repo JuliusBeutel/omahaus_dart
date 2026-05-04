@@ -1,30 +1,33 @@
-import type { DartThrow, Multiplier } from "../../types/game";
+import type { DartThrow } from '../../types/game';
+import { formatThrowLabel } from '../../../lib/gameLogic';
 
-interface Props {
+interface TurnSummaryProps {
   throws: DartThrow[];
   total: number;
+  isBust?: boolean;
 }
 
-function throwLabel(t: DartThrow): string {
-  const prefix: Record<Multiplier, string> = { 1: "", 2: "D", 3: "T" };
-  return `${prefix[t.multiplier]}${t.value}`;
-}
-
-export function TurnSummary({ throws, total }: Props) {
+export default function TurnSummary({ throws, total, isBust = false }: TurnSummaryProps) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-base/90">
-      <div className="flex flex-col items-center gap-6 animate-pop-in">
-        <div className="flex gap-4">
-          {throws.map((t, i) => (
-            <span key={i} className="text-accent text-3xl font-semibold">
-              {throwLabel(t)}
-            </span>
-          ))}
-        </div>
-        <p className="text-primary font-bold leading-none" style={{ fontSize: "clamp(4rem, 15vw, 10rem)" }}>
-          {total}
-        </p>
-        <p className="text-muted text-3xl tracking-wide">Punkte</p>
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-base/90 z-50">
+      <div className="animate-pop-in flex flex-col items-center gap-6 bg-surface border border-accent rounded-2xl px-12 py-10">
+        {isBust ? (
+          <span className="text-5xl font-bold text-danger">Bust!</span>
+        ) : (
+          <>
+            <div className="flex gap-4">
+              {throws.map((t, i) => (
+                <span
+                  key={i}
+                  className="text-xl font-mono bg-overlay rounded px-3 py-1 text-primary"
+                >
+                  {formatThrowLabel(t)}
+                </span>
+              ))}
+            </div>
+            <span className="text-4xl font-bold text-primary">{total} Punkte</span>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,1 +1,10 @@
-export type { GameMode, Multiplier, GameStatus, DartThrow, Player, Turn, GameState } from '../../lib/types';
+export type {
+  GameMode,
+  Multiplier,
+  GameStatus,
+  DartThrow,
+  Player,
+  Turn,
+  CompletedTurn,
+  GameState,
+} from '../../lib/types';

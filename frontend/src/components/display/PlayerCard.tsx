@@ -1,24 +1,30 @@
 import type { Player, DartThrow } from '../../types/game';
-import { ThrowSlots } from '../shared/ThrowSlots';
+import ThrowSlots from '../shared/ThrowSlots';
 
-interface Props {
+interface PlayerCardProps {
   player: Player;
   isActive: boolean;
-  throws: DartThrow[];
+  currentThrows: DartThrow[];
 }
 
-export function PlayerCard({ player, isActive, throws }: Props) {
+export default function PlayerCard({ player, isActive, currentThrows }: PlayerCardProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-4 p-10 ${
-        isActive ? 'bg-player-active' : 'bg-player-inactive'
+      className={`flex flex-col items-center justify-between p-4 rounded-xl h-full ${
+        isActive
+          ? 'bg-player-active text-primary'
+          : 'bg-player-inactive text-muted'
       }`}
     >
-      <p className="text-primary text-2xl tracking-wide">{player.name}</p>
-      <p className={`font-bold leading-none tracking-tight text-9xl ${isActive ? 'text-primary' : 'text-muted'}`}>
+      <span className={`text-lg font-semibold truncate max-w-full ${isActive ? 'text-primary' : 'text-muted'}`}>
+        {player.name}
+      </span>
+
+      <span className={`text-6xl font-bold tabular-nums ${isActive ? 'text-primary' : 'text-muted'}`}>
         {player.score}
-      </p>
-      <ThrowSlots throws={isActive ? throws : []} visible={true} />
+      </span>
+
+      <ThrowSlots throws={isActive ? currentThrows : []} invisible={!isActive} />
     </div>
   );
 }

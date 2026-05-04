@@ -1,10 +1,5 @@
 @import "tailwindcss";
 
-@layer base {
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; }
-}
-
 @theme {
   --color-base: #0c1a08;
   --color-surface: #162e0f;
@@ -16,19 +11,36 @@
   --color-primary: #d3e8cb;
   --color-muted: #aeaeae;
   --color-danger: #e94560;
+  --animate-pop-in: pop-in 0.25s ease-out;
 }
 
-html, body, #root {
-  height: 100%;
-  background-color: #0c1a08;
-  color: #d3e8cb;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #0c1a08;
+    color: #d3e8cb;
+    font-family: sans-serif;
+  }
 }
 
 @keyframes pop-in {
-  from { opacity: 0; transform: scale(0.8); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-@theme {
-  --animate-pop-in: pop-in 0.25s ease-out;
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

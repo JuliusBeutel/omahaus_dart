@@ -6,12 +6,17 @@ const redis = new Redis({
   token: process.env.KV_REST_API_TOKEN!,
 });
 
-const SESSION_TTL_SECONDS = 60 * 60 * 24;
+const TTL_SECONDS = 60 * 60 * 24;
 
 export async function getSession(sessionId: string): Promise<GameState | null> {
-  return redis.get<GameState>(`session:${sessionId}`);
+  const data = await redis.get<GameState>(`session:${sessionId}`);
+  return data ?? null;
 }
 
-export async function saveSession(state: GameState): Promise<void> {
-  await redis.set(`session:${state.sessionId}`, state, { ex: SESSION_TTL_SECONDS });
+export async function setSession(sessionId: string, state: GameState): Promise<void> {
+  await redis.set(`session:${sessionId}`, state, { ex: TTL_SECONDS });
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  await redis.del(`session:${sessionId}`);
 }

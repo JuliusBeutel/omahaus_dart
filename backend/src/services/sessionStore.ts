@@ -1,15 +1,15 @@
 import type { GameState } from '../types/game';
 
-const sessions = new Map<string, GameState>();
+const store = new Map<string, GameState>();
 
-export function get(sessionId: string): GameState | undefined {
-  return sessions.get(sessionId);
+export function getSession(id: string): GameState | undefined {
+  return store.get(id);
 }
 
-export function set(state: GameState): void {
-  sessions.set(state.sessionId, state);
+export function setSession(id: string, state: GameState): void {
+  store.set(id, state);
 }
 
-export function has(sessionId: string): boolean {
-  return sessions.has(sessionId);
+export function deleteSession(id: string): void {
+  store.delete(id);
 }

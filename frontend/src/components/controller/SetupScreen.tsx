@@ -1,150 +1,171 @@
-import { useState } from "react";
-import type { GameMode, GameState } from "../../types/game";
-import * as api from "../../api/client";
+import { useState, useRef } from 'react';
+import type { GameState, GameMode } from '../../types/game';
+import { patchMode, postPlayer, deletePlayer, postStart, postReorder } from '../../api/client';
 
-interface Props {
-  sessionId: string;
+interface SetupScreenProps {
   state: GameState;
+  onStateChange: (state: GameState) => void;
+  onEndSession?: () => void;
 }
 
-export function SetupScreen({ sessionId, state }: Props) {
-  const [nameInput, setNameInput] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function SetupScreen({ state, onStateChange, onEndSession }: SetupScreenProps) {
+  const [nameInput, setNameInput] = useState('');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const dragIndexRef = useRef<number | null>(null);
+  const dragOrderRef = useRef<GameState['players']>([]);
+
+  const sessionId = state.sessionId;
+
+  async function handleModeToggle(mode: GameMode) {
+    const newState = await patchMode(sessionId, mode);
+    onStateChange(newState);
+  }
 
   async function handleAddPlayer() {
     const name = nameInput.trim();
     if (!name || state.players.length >= 4) return;
-    await api.addPlayer(sessionId, name);
-    setNameInput("");
+    const newState = await postPlayer(sessionId, name);
+    onStateChange(newState);
+    setNameInput('');
+    inputRef.current?.focus();
   }
 
   async function handleRemovePlayer(playerId: string) {
-    await api.removePlayer(sessionId, playerId);
-  }
-
-  async function handleModeChange(mode: GameMode) {
-    await api.setMode(sessionId, mode);
+    const newState = await deletePlayer(sessionId, playerId);
+    onStateChange(newState);
   }
 
   async function handleStart() {
-    setLoading(true);
-    const pendingName = nameInput.trim();
-    let hasPlayers = state.players.length > 0;
-
-    if (pendingName && state.players.length < 4) {
-      await api.addPlayer(sessionId, pendingName);
-      setNameInput("");
-      hasPlayers = true;
+    let s = state;
+    if (nameInput.trim() && state.players.length < 4) {
+      s = await postPlayer(sessionId, nameInput.trim());
+      setNameInput('');
     }
+    if (s.players.length < 1) return;
+    const newState = await postStart(sessionId);
+    onStateChange(newState);
+  }
 
-    if (!hasPlayers) {
-      setLoading(false);
-      return;
-    }
+  function handleTouchStart(i: number) {
+    dragIndexRef.current = i;
+    dragOrderRef.current = [...state.players];
+    setDragIndex(i);
+  }
 
-    await api.startGame(sessionId);
-    setLoading(false);
+  function handleTouchMove(e: React.TouchEvent) {
+    e.preventDefault();
+    if (dragIndexRef.current === null) return;
+    const touch = e.touches[0];
+    let targetIndex = -1;
+    rowRefs.current.forEach((ref, idx) => {
+      if (!ref) return;
+      const rect = ref.getBoundingClientRect();
+      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        targetIndex = idx;
+      }
+    });
+    if (targetIndex === -1 || targetIndex === dragIndexRef.current) return;
+    const reordered = [...dragOrderRef.current];
+    const [moved] = reordered.splice(dragIndexRef.current, 1);
+    reordered.splice(targetIndex, 0, moved);
+    dragOrderRef.current = reordered;
+    dragIndexRef.current = targetIndex;
+    setDragIndex(targetIndex);
+    onStateChange({ ...state, players: reordered });
+  }
+
+  async function handleTouchEnd() {
+    if (dragIndexRef.current === null) return;
+    const finalOrder = [...dragOrderRef.current];
+    dragIndexRef.current = null;
+    dragOrderRef.current = [];
+    setDragIndex(null);
+    await postReorder(sessionId, finalOrder.map((p) => p.id));
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background px-4 pt-6 pb-28">
-      {/* HEADER */}
-      <h1 className="text-2xl text-center text-primary font-medium opacity-80 mb-4">
-        Spiel einrichten
-      </h1>
-
-      {/* GAME MODE */}
-      <div className="mb-6">
-        <div className="bg-surface rounded-2xl p-1 flex shadow-sm">
-          {[301, 501].map((m) => {
-            const active = state.mode === m;
-
-            return (
-              <button
-                key={m}
-                onClick={() => handleModeChange(m as GameMode)}
-                className={`
-                  flex-1 py-4 rounded-xl text-lg font-medium transition-all
-                  ${active ? "bg-accent text-white shadow" : "text-muted"}
-                `}
-              >
-                {m}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* PLAYERS */}
-      <div className="flex flex-col gap-3 flex-1">
-        {/* PLAYER COUNT */}
-        <span className="text-sm text-muted uppercase tracking-wider">
-          Spieler ({state.players.length}/4)
-        </span>
-
-        {/* PLAYER CARDS */}
-        <div className="flex flex-col gap-3">
-          {state.players.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between p-5 rounded-2xl bg-surface shadow-md"
-            >
-              <span className="text-xl font-medium text-primary">{p.name}</span>
-
-              <button
-                onClick={() => handleRemovePlayer(p.id)}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 text-lg"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* ADD PLAYER */}
-        {state.players.length < 4 && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAddPlayer();
-            }}
-            className="flex gap-3 mt-2"
-          >
-            <input
-              className="flex-1 px-5 py-5 rounded-2xl bg-surface text-lg text-primary outline-none focus:ring-2 focus:ring-accent"
-              placeholder="Neuer Spieler"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              maxLength={20}
-            />
-
-            <button
-              type="submit"
-              className="w-16 rounded-2xl bg-accent text-white text-2xl shadow-lg flex items-center justify-center"
-            >
-              +
-            </button>
-          </form>
-        )}
-      </div>
-
-      {/* START BUTTON (STICKY) */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background to-transparent">
+    <div className="flex flex-col h-full bg-base p-4 gap-4">
+      <div className="relative flex items-center justify-center">
         <button
-          onClick={handleStart}
-          disabled={state.players.length === 0 || loading}
-          className={`
-            w-full py-6 rounded-2xl text-xl font-semibold transition-all
-            ${
-              state.players.length === 0 || loading
-                ? "bg-overlay text-muted"
-                : "bg-accent text-white shadow-xl active:scale-[0.98]"
-            }
-          `}
+          onClick={onEndSession}
+          className="absolute left-0 bg-surface border border-accent rounded-lg px-3 py-1.5 text-muted text-sm"
         >
-          {loading ? "Starte..." : "Spiel starten"}
+          ✕
         </button>
+        <h1 className="text-xl font-bold text-primary">Omahaus Dart-Zähler</h1>
       </div>
+
+      {/* Mode selector */}
+      <div className="flex gap-2">
+        {([301, 501] as GameMode[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => handleModeToggle(m)}
+            className={`flex-1 py-3 rounded-lg font-bold text-lg border transition-colors ${
+              state.mode === m
+                ? 'bg-accent border-accent text-primary'
+                : 'bg-overlay border-overlay text-muted'
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+
+      {/* Player list */}
+      <div className="flex flex-col gap-2 flex-1">
+        {state.players.map((p, i) => (
+          <div
+            key={p.id}
+            ref={(el) => { rowRefs.current[i] = el; }}
+            onTouchStart={() => handleTouchStart(i)}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className={`flex items-center gap-3 bg-surface border border-accent rounded-lg px-3 py-2 cursor-grab touch-none select-none transition-opacity ${dragIndex === i ? 'opacity-40' : 'opacity-100'}`}
+          >
+            <span className="text-muted text-sm select-none">☰</span>
+            <span className="text-primary flex-1">{p.name}</span>
+            <button
+              onClick={() => handleRemovePlayer(p.id)}
+              className="text-danger font-bold px-2"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Add player input */}
+      {state.players.length < 4 && (
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
+            placeholder="Spielername..."
+            className="flex-1 bg-surface border border-accent rounded-lg px-3 py-2 text-primary placeholder:text-muted outline-none focus:border-primary"
+          />
+          <button
+            onClick={handleAddPlayer}
+            disabled={!nameInput.trim()}
+            className="bg-overlay border border-accent rounded-lg px-4 py-2 text-primary disabled:opacity-40"
+          >
+            +
+          </button>
+        </div>
+      )}
+
+      {/* Start button */}
+      <button
+        onClick={handleStart}
+        disabled={state.players.length < 1 && !nameInput.trim()}
+        className="w-full py-4 rounded-xl bg-action text-primary font-bold text-xl disabled:opacity-40"
+      >
+        Spiel starten
+      </button>
     </div>
   );
 }
