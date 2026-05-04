@@ -10,10 +10,11 @@ interface OverlayState {
   total: number;
   isBust: boolean;
   isLeaving: boolean;
+  isWashingMachine: boolean;
 }
 
-const OVERLAY_EXIT_START = 1600;
-const OVERLAY_UNMOUNT = 2150;
+const OVERLAY_EXIT_START = 2000;
+const OVERLAY_UNMOUNT = OVERLAY_EXIT_START + 550;
 
 export default function DisplayPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,11 +36,25 @@ export default function DisplayPage() {
 
       const lastTurn = state.turnHistory[state.turnHistory.length - 1];
       const total = lastTurn.throws.reduce((sum, t) => sum + t.points, 0);
-      setOverlay({ total, isBust: lastTurn.wasBust, isLeaving: false });
+      const throwValues = lastTurn.throws
+        .map((t) => t.value)
+        .sort((a, b) => a - b);
+      const isWashingMachine =
+        throwValues.length === 3 &&
+        throwValues[0] === 1 &&
+        throwValues[1] === 5 &&
+        throwValues[2] === 20;
+      setOverlay({
+        total,
+        isBust: lastTurn.wasBust,
+        isLeaving: false,
+        isWashingMachine,
+      });
 
       overlayTimers.current.push(
         setTimeout(
-          () => setOverlay((prev) => (prev ? { ...prev, isLeaving: true } : null)),
+          () =>
+            setOverlay((prev) => (prev ? { ...prev, isLeaving: true } : null)),
           OVERLAY_EXIT_START,
         ),
       );
@@ -117,7 +132,14 @@ export default function DisplayPage() {
         ))}
       </div>
 
-      {overlay && <TurnSummary total={overlay.total} isBust={overlay.isBust} isLeaving={overlay.isLeaving} />}
+      {overlay && (
+        <TurnSummary
+          total={overlay.total}
+          isBust={overlay.isBust}
+          isLeaving={overlay.isLeaving}
+          isWashingMachine={overlay.isWashingMachine}
+        />
+      )}
     </div>
   );
 }
