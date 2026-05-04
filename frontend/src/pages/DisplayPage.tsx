@@ -128,6 +128,7 @@ export default function DisplayPage() {
               i === state.currentPlayerIndex ? state.currentTurn.throws : []
             }
             mode={state.mode}
+            playerCount={state.players.length}
           />
         ))}
       </div>
