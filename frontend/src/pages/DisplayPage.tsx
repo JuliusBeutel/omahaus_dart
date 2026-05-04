@@ -82,13 +82,13 @@ export default function DisplayPage() {
     const avg = totalRounds > 0 ? Math.round(state.mode / totalRounds) : 0;
 
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-base gap-8">
-        <div className="animate-pop-in flex flex-col items-center gap-4 bg-surface border border-accent rounded-2xl px-12 py-10">
-          <span className="text-muted text-lg">Gewinner</span>
-          <span className="text-5xl font-bold text-primary">
+      <div className="flex items-center justify-center h-full bg-base p-6">
+        <div className="animate-pop-in flex flex-col items-center justify-center w-full h-full bg-player-active rounded-3xl gap-6">
+          <span className="text-primary/60 text-4xl font-medium tracking-widest uppercase">Gewinner</span>
+          <span className="text-primary font-bold leading-none text-[clamp(6rem,18vw,18rem)] text-center px-8">
             {winner?.name}
           </span>
-          <span className="text-muted">Ø {avg} Punkte/Runde</span>
+          <span className="text-primary/60 text-3xl">Ø {avg} Punkte/Runde</span>
         </div>
       </div>
     );
