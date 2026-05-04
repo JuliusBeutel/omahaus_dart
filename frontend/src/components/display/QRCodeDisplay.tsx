@@ -1,29 +1,36 @@
 import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
-interface Props {
+interface QRCodeDisplayProps {
   sessionId: string;
 }
 
-export function QRCodeDisplay({ sessionId }: Props) {
-  const [origin, setOrigin] = useState(window.location.origin);
+export default function QRCodeDisplay({ sessionId }: QRCodeDisplayProps) {
+  const [origin, setOrigin] = useState('');
 
   useEffect(() => {
     fetch('/api/local-ip')
-      .then((r) => r.ok ? r.json() : null)
-      .then((data: { ip: string } | null) => {
-        if (data?.ip) setOrigin(`http://${data.ip}:${window.location.port}`);
+      .then((r) => r.json())
+      .then((data: { ip: string }) => {
+        const port = window.location.port ? `:${window.location.port}` : '';
+        setOrigin(`http://${data.ip}${port}`);
       })
-      .catch(() => {});
+      .catch(() => {
+        setOrigin(window.location.origin);
+      });
   }, []);
 
-  const url = `${origin}/controller/${sessionId}`;
+  const url = origin ? `${origin}/controller/${sessionId}` : '';
 
   return (
-    <div className="flex flex-col items-center gap-3 p-6 bg-surface rounded-2xl text-primary">
-      <QRCodeSVG value={url} size={220} bgColor="#ffffff" fgColor="#0c1a08" />
-      <p className="text-lg tracking-widest">Session: <strong>{sessionId}</strong></p>
-      <p className="text-sm text-muted">Scan zum Beitreten</p>
+    <div className="flex flex-col items-center justify-center h-full gap-8">
+      <h1 className="text-3xl font-bold text-primary">Omahaus Dart-Zähler</h1>
+      {url && (
+        <div className="bg-white p-4 rounded-xl">
+          <QRCodeSVG value={url} size={240} />
+        </div>
+      )}
+      <p className="text-muted text-sm">Scanne den QR-Code mit deinem Handy</p>
     </div>
   );
 }

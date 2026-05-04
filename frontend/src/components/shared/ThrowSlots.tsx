@@ -1,34 +1,28 @@
 import type { DartThrow } from '../../types/game';
-import { DartIcon } from './DartIcon';
+import DartIcon from './DartIcon';
+import { formatThrowLabel } from '../../../lib/gameLogic';
 
-interface Props {
+interface ThrowSlotsProps {
   throws: DartThrow[];
-  visible?: boolean;
+  invisible?: boolean;
 }
 
-function throwLabel(t: DartThrow): string {
-  const prefix = t.multiplier === 2 ? 'D' : t.multiplier === 3 ? 'T' : '';
-  const field = t.value === 25 ? 'Bull' : String(t.value);
-  return `${prefix}${field}`;
-}
+export default function ThrowSlots({ throws, invisible = false }: ThrowSlotsProps) {
+  const slots = [0, 1, 2];
 
-export function ThrowSlots({ throws, visible = true }: Props) {
   return (
-    <div className={`flex gap-3 mt-3 ${visible ? 'visible' : 'invisible'}`}>
-      {[0, 1, 2].map((i) => {
+    <div className={`flex gap-2 justify-center ${invisible ? 'invisible' : ''}`}>
+      {slots.map((i) => {
         const t = throws[i];
         return (
           <div
             key={i}
-            className="w-20 h-14 bg-overlay rounded-xl flex items-center justify-center border border-accent/40"
+            className="flex items-center gap-1 bg-overlay rounded px-2 py-1 min-w-[3.5rem] justify-center"
           >
-            {t ? (
-              <span className="text-primary font-bold text-lg">{throwLabel(t)}</span>
-            ) : (
-              <span className="text-accent">
-                <DartIcon />
-              </span>
-            )}
+            <DartIcon className="w-3 h-3 text-accent" />
+            <span className="text-sm font-mono text-primary">
+              {t ? formatThrowLabel(t) : '—'}
+            </span>
           </div>
         );
       })}

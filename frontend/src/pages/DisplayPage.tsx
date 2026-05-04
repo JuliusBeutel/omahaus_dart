@@ -1,89 +1,105 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGameState } from '../hooks/useGameState';
-import { ScoreBoard } from '../components/display/ScoreBoard';
-import { QRCodeDisplay } from '../components/display/QRCodeDisplay';
-import { PlayerCard } from '../components/display/PlayerCard';
-import { TurnSummary } from '../components/shared/TurnSummary';
 import type { DartThrow } from '../types/game';
+import QRCodeDisplay from '../components/display/QRCodeDisplay';
+import ScoreBoard from '../components/display/ScoreBoard';
+import PlayerCard from '../components/display/PlayerCard';
+import TurnSummary from '../components/shared/TurnSummary';
 
-interface SummaryData { throws: DartThrow[]; total: number; }
+interface OverlayState {
+  throws: DartThrow[];
+  total: number;
+  isBust: boolean;
+}
 
-export function DisplayPage() {
+export default function DisplayPage() {
   const { id } = useParams<{ id: string }>();
-  const state = useGameState(id ?? null);
-  const prevHistoryLen = useRef(0);
-  const [summary, setSummary] = useState<SummaryData | null>(null);
+  const navigate = useNavigate();
+  const { state, notFound } = useGameState(id!);
+  const prevHistoryLenRef = useRef(0);
+  const [overlay, setOverlay] = useState<OverlayState | null>(null);
+
+  useEffect(() => {
+    if (notFound) navigate('/', { replace: true });
+  }, [notFound, navigate]);
 
   useEffect(() => {
     if (!state) return;
-    const len = state.turnHistory.length;
-    if (len > prevHistoryLen.current) {
-      const completed = state.turnHistory[len - 1];
-      if (!completed.wasBust) {
-        const total = completed.throws.reduce((s, t) => s + t.points, 0);
-        setSummary({ throws: completed.throws, total });
-        setTimeout(() => setSummary(null), 1500);
-      }
+    if (state.turnHistory.length > prevHistoryLenRef.current) {
+      const lastTurn = state.turnHistory[state.turnHistory.length - 1];
+      const total = lastTurn.throws.reduce((sum, t) => sum + t.points, 0);
+      setOverlay({ throws: lastTurn.throws, total, isBust: lastTurn.wasBust });
+      setTimeout(() => setOverlay(null), 1500);
     }
-    prevHistoryLen.current = len;
-  }, [state?.turnHistory.length]);
-
-  if (!id) return null;
+    prevHistoryLenRef.current = state.turnHistory.length;
+  }, [state]);
 
   if (!state) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-base">
-        <p className="text-muted text-2xl">Verbinde...</p>
+      <div className="flex items-center justify-center h-full bg-base">
+        <span className="text-muted">Lade...</span>
       </div>
     );
   }
 
   if (state.status === 'finished') {
     const winner = state.players.find((p) => p.id === state.winnerId);
-    const avg = winner && winner.dartsThrown > 0
-      ? ((state.mode - winner.score) / winner.dartsThrown * 3).toFixed(1)
-      : '—';
+    const totalDarts = winner?.dartsThrown ?? 0;
+    const totalRounds = Math.ceil(totalDarts / 3);
+    const avg = totalRounds > 0 ? Math.round(state.mode / totalRounds) : 0;
 
     return (
-      <div className="flex items-center justify-center min-h-screen bg-base">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <p className="text-muted text-lg uppercase tracking-widest">Gewinner</p>
-          <p className="text-primary text-8xl font-bold">{winner?.name ?? '?'}</p>
-          <p className="text-primary text-2xl">Ø {avg} pro Runde</p>
+      <div className="flex flex-col items-center justify-center h-full bg-base gap-8">
+        <div className="animate-pop-in flex flex-col items-center gap-4 bg-surface border border-accent rounded-2xl px-12 py-10">
+          <span className="text-muted text-lg">Gewinner</span>
+          <span className="text-5xl font-bold text-primary">{winner?.name}</span>
+          <span className="text-muted">Ø {avg} Punkte/Runde</span>
         </div>
       </div>
     );
   }
 
-  if (state.status === 'playing') {
-    const cols = state.players.length === 4 ? 2 : state.players.length;
+  if (state.status === 'setup') {
+    if (state.players.length === 0) {
+      return (
+        <div className="h-full bg-base">
+          <QRCodeDisplay sessionId={id!} />
+        </div>
+      );
+    }
     return (
-      <div
-        className="grid h-screen"
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-      >
+      <div className="h-full bg-base">
+        <ScoreBoard players={state.players} mode={state.mode} />
+      </div>
+    );
+  }
+
+  const gridCols =
+    state.players.length === 4
+      ? 'grid-cols-2 grid-rows-2'
+      : state.players.length === 3
+        ? 'grid-cols-3'
+        : state.players.length === 2
+          ? 'grid-cols-2'
+          : 'grid-cols-1';
+
+  return (
+    <div className="h-full bg-base">
+      <div className={`grid h-full gap-2 p-2 ${gridCols}`}>
         {state.players.map((player, i) => (
           <PlayerCard
             key={player.id}
             player={player}
             isActive={i === state.currentPlayerIndex}
-            throws={i === state.currentPlayerIndex ? state.currentTurn.throws : []}
+            currentThrows={i === state.currentPlayerIndex ? state.currentTurn.throws : []}
           />
         ))}
-        {summary && <TurnSummary throws={summary.throws} total={summary.total} />}
       </div>
-    );
-  }
 
-  return (
-    <div className="flex gap-10 p-10 min-h-screen bg-base text-primary items-start">
-      <div className="shrink-0">
-        <QRCodeDisplay sessionId={id} />
-      </div>
-      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <ScoreBoard players={state.players} />
-      </div>
+      {overlay && (
+        <TurnSummary throws={overlay.throws} total={overlay.total} isBust={overlay.isBust} />
+      )}
     </div>
   );
 }

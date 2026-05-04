@@ -1,25 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession, saveSession } from './kv.js';
+import { getSession, setSession } from './kv.js';
 import type { GameState } from './types.js';
 
-export function sessionId(req: VercelRequest): string {
-  const { id } = req.query as Record<string, string>;
-  return id;
-}
-
 export async function mutate(
-  req: VercelRequest,
+  _req: VercelRequest,
   res: VercelResponse,
-  method: string,
-  handler: (state: GameState, req: VercelRequest) => GameState | Promise<GameState>
+  sessionId: string,
+  transform: (state: GameState) => GameState
 ): Promise<void> {
-  if (req.method !== method) { res.status(405).end(); return; }
-
-  const id = sessionId(req);
-  const state = await getSession(id);
-  if (!state) { res.status(404).json({ error: 'Session not found' }); return; }
-
-  const next = await handler(state, req);
-  await saveSession(next);
-  res.json(next);
+  const state = await getSession(sessionId);
+  if (!state) {
+    res.status(404).json({ error: 'Session not found' });
+    return;
+  }
+  const newState = transform(state);
+  await setSession(sessionId, newState);
+  res.status(200).json(newState);
 }
