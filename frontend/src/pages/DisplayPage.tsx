@@ -93,6 +93,7 @@ export default function DisplayPage() {
             player={player}
             isActive={i === state.currentPlayerIndex}
             currentThrows={i === state.currentPlayerIndex ? state.currentTurn.throws : []}
+            mode={state.mode}
           />
         ))}
       </div>
