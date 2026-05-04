@@ -14,17 +14,27 @@ interface SetupScreenProps {
   onEndSession?: () => void;
 }
 
+interface DragState {
+  index: number;
+  startTouchY: number;
+  itemHeight: number;
+  deltaY: number;
+  targetIndex: number;
+  releasing: boolean;
+}
+
+const GAP = 8;
+
 export default function SetupScreen({
   state,
   onStateChange,
   onEndSession,
 }: SetupScreenProps) {
   const [nameInput, setNameInput] = useState("");
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const dragIndexRef = useRef<number | null>(null);
-  const dragOrderRef = useRef<GameState["players"]>([]);
+  const releaseCommitRef = useRef<(() => void) | null>(null);
 
   const sessionId = state.sessionId;
 
@@ -58,44 +68,74 @@ export default function SetupScreen({
     onStateChange(newState);
   }
 
-  function handleTouchStart(i: number) {
-    dragIndexRef.current = i;
-    dragOrderRef.current = [...state.players];
-    setDragIndex(i);
+  function handleTouchStart(i: number, e: React.TouchEvent) {
+    const ref = rowRefs.current[i];
+    if (!ref) return;
+    setDrag({
+      index: i,
+      startTouchY: e.touches[0].clientY,
+      itemHeight: ref.getBoundingClientRect().height,
+      deltaY: 0,
+      targetIndex: i,
+      releasing: false,
+    });
   }
 
   function handleTouchMove(e: React.TouchEvent) {
     e.preventDefault();
-    if (dragIndexRef.current === null) return;
-    const touch = e.touches[0];
-    let targetIndex = -1;
-    rowRefs.current.forEach((ref, idx) => {
-      if (!ref) return;
-      const rect = ref.getBoundingClientRect();
-      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-        targetIndex = idx;
-      }
-    });
-    if (targetIndex === -1 || targetIndex === dragIndexRef.current) return;
-    const reordered = [...dragOrderRef.current];
-    const [moved] = reordered.splice(dragIndexRef.current, 1);
-    reordered.splice(targetIndex, 0, moved);
-    dragOrderRef.current = reordered;
-    dragIndexRef.current = targetIndex;
-    setDragIndex(targetIndex);
-    onStateChange({ ...state, players: reordered });
+    if (!drag || drag.releasing) return;
+    const deltaY = e.touches[0].clientY - drag.startTouchY;
+    const step = drag.itemHeight + GAP;
+    const targetIndex = Math.max(
+      0,
+      Math.min(
+        state.players.length - 1,
+        Math.round(drag.index + deltaY / step),
+      ),
+    );
+    setDrag({ ...drag, deltaY, targetIndex });
   }
 
-  async function handleTouchEnd() {
-    if (dragIndexRef.current === null) return;
-    const finalOrder = [...dragOrderRef.current];
-    dragIndexRef.current = null;
-    dragOrderRef.current = [];
-    setDragIndex(null);
-    await postReorder(
-      sessionId,
-      finalOrder.map((p) => p.id),
-    );
+  function handleTouchEnd() {
+    if (!drag || drag.releasing) return;
+    const { index, targetIndex, itemHeight } = drag;
+    const step = itemHeight + GAP;
+    const finalDeltaY = (targetIndex - index) * step;
+
+    const reordered = [...state.players];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    const commit = () => {
+      if (!releaseCommitRef.current) return;
+      releaseCommitRef.current = null;
+      setDrag(null);
+      if (index !== targetIndex) {
+        onStateChange({ ...state, players: reordered });
+        postReorder(
+          sessionId,
+          reordered.map((p) => p.id),
+        );
+      }
+    };
+    releaseCommitRef.current = commit;
+
+    setDrag({ ...drag, deltaY: finalDeltaY, releasing: true });
+    setTimeout(commit, 600);
+  }
+
+  function getTransform(i: number): string {
+    if (!drag) return "translateY(0px)";
+    const step = drag.itemHeight + GAP;
+    if (i === drag.index) {
+      const min = -drag.index * step;
+      const max = (state.players.length - 1 - drag.index) * step;
+      return `translateY(${Math.max(min, Math.min(max, drag.deltaY))}px)`;
+    }
+    const { index: from, targetIndex: to } = drag;
+    if (from < to && i > from && i <= to) return `translateY(-${step}px)`;
+    if (from > to && i >= to && i < from) return `translateY(${step}px)`;
+    return "translateY(0px)";
   }
 
   return (
@@ -135,10 +175,31 @@ export default function SetupScreen({
             ref={(el) => {
               rowRefs.current[i] = el;
             }}
-            onTouchStart={() => handleTouchStart(i)}
+            onTouchStart={(e) => handleTouchStart(i, e)}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className={`flex items-center gap-3 bg-surface border border-accent rounded-lg px-3 py-2 cursor-grab touch-none select-none transition-opacity ${dragIndex === i ? "opacity-40" : "opacity-100"}`}
+            onTransitionEnd={
+              drag?.index === i && drag.releasing
+                ? () => releaseCommitRef.current?.()
+                : undefined
+            }
+            style={{
+              transform: getTransform(i),
+              transition: !drag
+                ? "none"
+                : drag.index === i
+                  ? drag.releasing
+                    ? "transform 500ms ease"
+                    : "none"
+                  : drag.releasing
+                    ? "none"
+                    : "transform 500ms ease",
+              zIndex: drag?.index === i ? 10 : 1,
+              position: "relative",
+            }}
+            className={`flex items-center gap-3 bg-surface rounded-lg px-3 py-4 touch-none select-none ${
+              drag?.index === i ? "opacity-50 cursor-grabbing" : "cursor-grab"
+            }`}
           >
             <span className="text-muted text-sm select-none">☰</span>
             <span className="text-primary flex-1">{p.name}</span>
@@ -161,7 +222,7 @@ export default function SetupScreen({
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddPlayer()}
             placeholder="Spielername..."
-            className="flex-1 bg-surface border border-accent rounded-lg px-3 py-2 text-primary placeholder:text-muted outline-none focus:border-primary"
+            className="flex-1 bg-surface rounded-lg px-3 py-4 text-primary placeholder:text-muted outline-none focus:border-primary"
           />
           <button
             onClick={handleAddPlayer}
