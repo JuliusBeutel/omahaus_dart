@@ -36,10 +36,12 @@ export default function DisplayPage() {
 
       const lastTurn = state.turnHistory[state.turnHistory.length - 1];
       const total = lastTurn.throws.reduce((sum, t) => sum + t.points, 0);
+      const allSingles = lastTurn.throws.every((t) => t.multiplier === 1);
       const throwValues = lastTurn.throws
         .map((t) => t.value)
         .sort((a, b) => a - b);
       const isWashingMachine =
+        allSingles &&
         throwValues.length === 3 &&
         throwValues[0] === 1 &&
         throwValues[1] === 5 &&
