@@ -12,6 +12,8 @@
   --color-muted: #aeaeae;
   --color-danger: #e94560;
   --animate-pop-in: pop-in 0.25s ease-out;
+  --animate-overlay-in: overlay-in 0.35s ease-out;
+  --animate-overlay-out: overlay-out 0.45s ease-in forwards;
 }
 
 @layer base {
@@ -43,4 +45,14 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
