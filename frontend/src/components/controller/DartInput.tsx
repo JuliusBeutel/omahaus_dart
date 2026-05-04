@@ -1,4 +1,4 @@
-import type { Multiplier } from '../../types/game';
+import type { Multiplier } from "../../types/game";
 
 interface DartInputProps {
   multiplier: Multiplier;
@@ -8,16 +8,53 @@ interface DartInputProps {
   disabled?: boolean;
 }
 
-const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const NUMBERS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+];
 
 function MultiplierDots({ count }: { count: Multiplier }) {
-  if (count === 1) return <span className="h-2" />;
   return (
-    <span className="flex gap-1 justify-center">
-      {Array.from({ length: count }).map((_, i) => (
-        <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+    <span
+      className={`flex gap-1 justify-center ${count === 1 ? "invisible" : ""}`}
+    >
+      {Array.from({ length: count === 1 ? 2 : count }).map((_, i) => (
+        <span
+          key={i}
+          className="w-1.5 h-1.5 rounded-full bg-primary inline-block"
+        />
       ))}
     </span>
+  );
+}
+
+interface NumberButtonProps {
+  value: number;
+  multiplier: Multiplier;
+  onThrow: (value: number) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+function NumberButton({
+  value,
+  multiplier,
+  onThrow,
+  disabled = false,
+  className = "",
+}: NumberButtonProps) {
+  const effectiveMultiplier: Multiplier =
+    value === 25 && multiplier === 3 ? 1 : multiplier;
+  const isDisabled = disabled || (value === 25 && multiplier === 3);
+
+  return (
+    <button
+      onClick={() => !isDisabled && onThrow(value)}
+      disabled={isDisabled}
+      className={`py-3 flex flex-col items-center justify-center gap-0.5 bg-overlay rounded-lg text-primary font-bold text-2xl active:bg-accent disabled:opacity-40 ${className}`}
+    >
+      {value}
+      <MultiplierDots count={effectiveMultiplier} />
+    </button>
   );
 }
 
@@ -38,20 +75,20 @@ export default function DartInput({
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => toggleMultiplier(2)}
-          className={`py-3 rounded-lg font-bold text-base border transition-colors ${
+          className={`py-3 rounded-lg font-bold transition-colors text-2xl ${
             multiplier === 2
-              ? 'bg-accent border-accent text-primary'
-              : 'bg-overlay border-overlay text-muted'
+              ? "bg-accent border-accent text-primary"
+              : "bg-overlay border-overlay text-muted"
           }`}
         >
           Double
         </button>
         <button
           onClick={() => toggleMultiplier(3)}
-          className={`py-3 rounded-lg font-bold text-base border transition-colors ${
+          className={`py-3 rounded-lg font-bold text-2xl transition-colors ${
             multiplier === 3
-              ? 'bg-accent border-accent text-primary'
-              : 'bg-overlay border-overlay text-muted'
+              ? "bg-accent border-accent text-primary"
+              : "bg-overlay border-overlay text-muted"
           }`}
         >
           Triple
@@ -61,41 +98,35 @@ export default function DartInput({
       {/* Number grid 4×5 */}
       <div className="grid grid-cols-4 gap-2">
         {NUMBERS.map((n) => (
-          <button
+          <NumberButton
             key={n}
-            onClick={() => !disabled && onThrow(n)}
+            value={n}
+            multiplier={multiplier}
+            onThrow={onThrow}
             disabled={disabled}
-            className="py-2 flex flex-col items-center justify-center gap-0.5 bg-overlay border border-accent rounded-lg text-primary font-bold text-lg active:bg-accent disabled:opacity-40"
-          >
-            {n}
-            <MultiplierDots count={multiplier} />
-          </button>
+          />
         ))}
       </div>
 
       {/* Bottom row: 0 | 25 | Undo */}
       <div className="grid grid-cols-4 gap-2">
-        <button
-          onClick={() => !disabled && onThrow(0)}
+        <NumberButton
+          value={0}
+          multiplier={multiplier}
+          onThrow={onThrow}
           disabled={disabled}
-          className="py-2 flex flex-col items-center justify-center gap-0.5 bg-overlay border border-accent rounded-lg text-primary font-bold text-lg active:bg-accent disabled:opacity-40"
-        >
-          0
-          <MultiplierDots count={multiplier} />
-        </button>
-        <button
-          onClick={() => !disabled && onThrow(25)}
-          disabled={disabled || multiplier === 3}
-          className="py-2 flex flex-col items-center justify-center gap-0.5 bg-overlay border border-accent rounded-lg text-primary font-bold text-lg active:bg-accent disabled:opacity-40"
-        >
-          25
-          <MultiplierDots count={multiplier === 3 ? 1 : multiplier} />
-        </button>
+        />
+        <NumberButton
+          value={25}
+          multiplier={multiplier}
+          onThrow={onThrow}
+          disabled={disabled}
+        />
         <button
           onClick={onUndo}
-          className="col-span-2 py-3 bg-surface border border-accent rounded-lg text-muted font-bold text-base active:bg-overlay"
+          className="col-span-2 py-3 bg-surface rounded-lg text-muted font-bold text-base active:bg-overlay"
         >
-          ↩ zurück
+          ↩
         </button>
       </div>
     </div>

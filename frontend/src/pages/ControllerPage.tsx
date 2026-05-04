@@ -1,17 +1,27 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import type { GameState, Multiplier } from '../types/game';
-import { processThrow as localProcessThrow, undoLastThrow as localUndo } from '../../lib/gameLogic';
-import { getSession, postThrow, postUndo, postReset, deleteSession } from '../api/client';
-import SetupScreen from '../components/controller/SetupScreen';
-import DartInput from '../components/controller/DartInput';
-import ThrowSlots from '../components/shared/ThrowSlots';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import type { GameState, Multiplier } from "../types/game";
+import {
+  processThrow as localProcessThrow,
+  undoLastThrow as localUndo,
+} from "../../lib/gameLogic";
+import {
+  getSession,
+  postThrow,
+  postUndo,
+  postReset,
+  deleteSession,
+} from "../api/client";
+import SetupScreen from "../components/controller/SetupScreen";
+import DartInput from "../components/controller/DartInput";
+import ThrowSlots from "../components/shared/ThrowSlots";
 
 export default function ControllerPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [multiplier, setMultiplier] = useState<Multiplier>(1);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const pendingRef = useRef(false);
 
   useEffect(() => {
@@ -36,7 +46,7 @@ export default function ControllerPage() {
   }, [id]);
 
   async function handleThrow(value: number) {
-    if (!gameState || gameState.status !== 'playing') return;
+    if (!gameState || gameState.status !== "playing") return;
     const prevState = gameState;
     const optimistic = localProcessThrow(gameState, value, multiplier);
     setGameState(optimistic);
@@ -82,8 +92,10 @@ export default function ControllerPage() {
     if (!id) return;
     try {
       await deleteSession(id);
-    } catch { /* ignore */ }
-    navigate('/scan', { replace: true });
+    } catch {
+      /* ignore */
+    }
+    navigate("/scan", { replace: true });
   }
 
   if (!gameState) {
@@ -94,7 +106,7 @@ export default function ControllerPage() {
     );
   }
 
-  if (gameState.status === 'setup') {
+  if (gameState.status === "setup") {
     return (
       <SetupScreen
         state={gameState}
@@ -104,13 +116,15 @@ export default function ControllerPage() {
     );
   }
 
-  if (gameState.status === 'finished') {
+  if (gameState.status === "finished") {
     const winner = gameState.players.find((p) => p.id === gameState.winnerId);
     return (
       <div className="flex flex-col items-center justify-center h-full bg-base gap-8 p-6">
         <div className="flex flex-col items-center gap-4 bg-surface border border-accent rounded-2xl px-8 py-8 w-full">
           <span className="text-muted">Gewinner</span>
-          <span className="text-4xl font-bold text-primary">{winner?.name}</span>
+          <span className="text-4xl font-bold text-primary">
+            {winner?.name}
+          </span>
         </div>
         <button
           onClick={handleExit}
@@ -126,21 +140,32 @@ export default function ControllerPage() {
 
   return (
     <div className="flex flex-col h-full bg-base p-3 gap-3">
-      {/* Top bar: exit + player info */}
-      <div className="flex items-start gap-3">
+      {/* Player info — full width, exit button inside top-left */}
+      <div className="relative flex flex-col items-center bg-surface  rounded-xl p-3 py-4 gap-2">
         <button
-          onClick={handleExit}
-          className="shrink-0 bg-surface border border-accent rounded-lg px-3 py-2 text-muted text-sm"
+          onClick={() => setShowExitDialog(true)}
+          className="absolute top-3 left-3 text-muted active:text-primary"
+          aria-label="Spiel beenden"
         >
-          ← Exit
+          <svg
+            viewBox="0 0 512 512"
+            className="w-7 h-7 rotate-180"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="32"
+          >
+            <path d="M320,176V136a40,40,0,0,0-40-40H88a40,40,0,0,0-40,40V376a40,40,0,0,0,40,40H280a40,40,0,0,0,40-40V336" />
+            <polyline points="384 176 464 256 384 336" />
+            <line x1="191" y1="256" x2="464" y2="256" />
+          </svg>
         </button>
-        <div className="flex-1 flex flex-col items-center bg-surface border border-accent rounded-xl p-3 gap-2">
-          <span className="text-muted text-sm">{currentPlayer.name}</span>
-          <span className="text-5xl font-bold text-primary tabular-nums">
-            {currentPlayer.score}
-          </span>
-          <ThrowSlots throws={gameState.currentTurn.throws} />
-        </div>
+        <span className="text-muted text-xl">{currentPlayer.name}</span>
+        <span className="text-5xl font-bold text-primary tabular-nums">
+          {currentPlayer.score}
+        </span>
+        <ThrowSlots throws={gameState.currentTurn.throws} />
       </div>
 
       {/* Dart input */}
@@ -152,6 +177,39 @@ export default function ControllerPage() {
           onUndo={handleUndo}
         />
       </div>
+
+      {/* Exit confirmation dialog */}
+      {showExitDialog && (
+        <div className="fixed inset-0 bg-base/80 z-50 flex items-center justify-center p-6">
+          <div className="bg-surface border border-accent rounded-2xl p-8 flex flex-col gap-6 w-full">
+            <div className="flex flex-col gap-1">
+              <span className="text-primary text-xl font-bold">
+                Spiel beenden?
+              </span>
+              <span className="text-muted text-sm">
+                Der aktuelle Spielstand geht verloren.
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={async () => {
+                  setShowExitDialog(false);
+                  await handleExit();
+                }}
+                className="py-4 rounded-xl bg-danger text-primary font-bold text-lg active:opacity-80"
+              >
+                Beenden
+              </button>
+              <button
+                onClick={() => setShowExitDialog(false)}
+                className="py-4 rounded-xl bg-overlay text-muted font-bold text-lg active:bg-accent"
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
