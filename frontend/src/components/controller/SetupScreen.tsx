@@ -1,6 +1,12 @@
-import { useState, useRef } from 'react';
-import type { GameState, GameMode } from '../../types/game';
-import { patchMode, postPlayer, deletePlayer, postStart, postReorder } from '../../api/client';
+import { useState, useRef } from "react";
+import type { GameState, GameMode } from "../../types/game";
+import {
+  patchMode,
+  postPlayer,
+  deletePlayer,
+  postStart,
+  postReorder,
+} from "../../api/client";
 
 interface SetupScreenProps {
   state: GameState;
@@ -8,13 +14,17 @@ interface SetupScreenProps {
   onEndSession?: () => void;
 }
 
-export default function SetupScreen({ state, onStateChange, onEndSession }: SetupScreenProps) {
-  const [nameInput, setNameInput] = useState('');
+export default function SetupScreen({
+  state,
+  onStateChange,
+  onEndSession,
+}: SetupScreenProps) {
+  const [nameInput, setNameInput] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragIndexRef = useRef<number | null>(null);
-  const dragOrderRef = useRef<GameState['players']>([]);
+  const dragOrderRef = useRef<GameState["players"]>([]);
 
   const sessionId = state.sessionId;
 
@@ -28,7 +38,7 @@ export default function SetupScreen({ state, onStateChange, onEndSession }: Setu
     if (!name || state.players.length >= 4) return;
     const newState = await postPlayer(sessionId, name);
     onStateChange(newState);
-    setNameInput('');
+    setNameInput("");
     inputRef.current?.focus();
   }
 
@@ -41,7 +51,7 @@ export default function SetupScreen({ state, onStateChange, onEndSession }: Setu
     let s = state;
     if (nameInput.trim() && state.players.length < 4) {
       s = await postPlayer(sessionId, nameInput.trim());
-      setNameInput('');
+      setNameInput("");
     }
     if (s.players.length < 1) return;
     const newState = await postStart(sessionId);
@@ -82,7 +92,10 @@ export default function SetupScreen({ state, onStateChange, onEndSession }: Setu
     dragIndexRef.current = null;
     dragOrderRef.current = [];
     setDragIndex(null);
-    await postReorder(sessionId, finalOrder.map((p) => p.id));
+    await postReorder(
+      sessionId,
+      finalOrder.map((p) => p.id),
+    );
   }
 
   return (
@@ -105,8 +118,8 @@ export default function SetupScreen({ state, onStateChange, onEndSession }: Setu
             onClick={() => handleModeToggle(m)}
             className={`flex-1 py-3 rounded-lg font-bold text-lg border transition-colors ${
               state.mode === m
-                ? 'bg-accent border-accent text-primary'
-                : 'bg-overlay border-overlay text-muted'
+                ? "bg-accent border-accent text-primary"
+                : "bg-surface border-surface text-muted"
             }`}
           >
             {m}
@@ -119,11 +132,13 @@ export default function SetupScreen({ state, onStateChange, onEndSession }: Setu
         {state.players.map((p, i) => (
           <div
             key={p.id}
-            ref={(el) => { rowRefs.current[i] = el; }}
+            ref={(el) => {
+              rowRefs.current[i] = el;
+            }}
             onTouchStart={() => handleTouchStart(i)}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className={`flex items-center gap-3 bg-surface border border-accent rounded-lg px-3 py-2 cursor-grab touch-none select-none transition-opacity ${dragIndex === i ? 'opacity-40' : 'opacity-100'}`}
+            className={`flex items-center gap-3 bg-surface border border-accent rounded-lg px-3 py-2 cursor-grab touch-none select-none transition-opacity ${dragIndex === i ? "opacity-40" : "opacity-100"}`}
           >
             <span className="text-muted text-sm select-none">☰</span>
             <span className="text-primary flex-1">{p.name}</span>
@@ -144,7 +159,7 @@ export default function SetupScreen({ state, onStateChange, onEndSession }: Setu
             ref={inputRef}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
+            onKeyDown={(e) => e.key === "Enter" && handleAddPlayer()}
             placeholder="Spielername..."
             className="flex-1 bg-surface border border-accent rounded-lg px-3 py-2 text-primary placeholder:text-muted outline-none focus:border-primary"
           />
