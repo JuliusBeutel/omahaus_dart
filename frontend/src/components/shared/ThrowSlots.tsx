@@ -5,11 +5,15 @@ import DartIcon from "./DartIcon";
 interface ThrowSlotsProps {
   throws: DartThrow[];
   invisible?: boolean;
+  slotClassName?: string;
+  isBust?: boolean;
 }
 
 export default function ThrowSlots({
   throws,
   invisible = false,
+  slotClassName = "bg-surface border border-overlay",
+  isBust = false,
 }: ThrowSlotsProps) {
   const slots = [0, 1, 2];
 
@@ -19,13 +23,16 @@ export default function ThrowSlots({
     >
       {slots.map((i) => {
         const t = throws[i];
+        const isBustDart = isBust && t && i === throws.length - 1;
         return (
           <div
             key={i}
-            className="flex items-center justify-center bg-overlay rounded-lg w-16 h-16"
+            className={`flex items-center justify-center ${slotClassName} rounded-lg w-16 h-16`}
           >
             {t ? (
-              <span className="text-3xl  font-bold text-primary">
+              <span
+                className={`text-3xl font-bold ${isBustDart ? "text-danger" : "text-primary"}`}
+              >
                 {formatThrowLabel(t)}
               </span>
             ) : (

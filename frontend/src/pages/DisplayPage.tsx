@@ -121,18 +121,33 @@ export default function DisplayPage() {
   return (
     <div className="h-full bg-base">
       <div className={`grid h-full gap-2 p-2 ${gridCols}`}>
-        {state.players.map((player, i) => (
-          <PlayerCard
-            key={player.id}
-            player={player}
-            isActive={i === state.currentPlayerIndex}
-            currentThrows={
-              i === state.currentPlayerIndex ? state.currentTurn.throws : []
+        {state.players.map((player, i) => {
+          const isActive = i === state.currentPlayerIndex;
+          let lastTurnThrows: (typeof state.turnHistory)[0]["throws"] = [];
+          let lastTurnWasBust = false;
+          if (!isActive) {
+            for (let h = state.turnHistory.length - 1; h >= 0; h--) {
+              const turn = state.turnHistory[h];
+              if (turn.playerIndex === i && turn.throws.length > 0) {
+                lastTurnThrows = turn.throws;
+                lastTurnWasBust = turn.wasBust;
+                break;
+              }
             }
-            mode={state.mode}
-            playerCount={state.players.length}
-          />
-        ))}
+          }
+          return (
+            <PlayerCard
+              key={player.id}
+              player={player}
+              isActive={isActive}
+              currentThrows={isActive ? state.currentTurn.throws : []}
+              lastTurnThrows={lastTurnThrows}
+              lastTurnWasBust={lastTurnWasBust}
+              mode={state.mode}
+              playerCount={state.players.length}
+            />
+          );
+        })}
       </div>
 
       {overlay && (

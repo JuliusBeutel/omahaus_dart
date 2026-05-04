@@ -50,7 +50,7 @@ function NumberButton({
     <button
       onClick={() => !isDisabled && onThrow(value)}
       disabled={isDisabled}
-      className={`py-3 flex flex-col items-center justify-center gap-0.5 bg-overlay rounded-lg text-primary font-bold text-2xl active:bg-accent disabled:opacity-40 ${className}`}
+      className={`py-3 flex flex-col items-center justify-center gap-0.5 bg-surface rounded-lg text-primary font-bold text-2xl active:bg-accent disabled:opacity-40 ${className}`}
     >
       {value}
       <MultiplierDots count={effectiveMultiplier} />
@@ -78,7 +78,7 @@ export default function DartInput({
           className={`py-3 rounded-lg font-bold transition-colors text-2xl ${
             multiplier === 2
               ? "bg-accent border-accent text-primary"
-              : "bg-overlay border-overlay text-muted"
+              : "bg-surface border-overlay text-muted"
           }`}
         >
           Double
@@ -88,7 +88,7 @@ export default function DartInput({
           className={`py-3 rounded-lg font-bold text-2xl transition-colors ${
             multiplier === 3
               ? "bg-accent border-accent text-primary"
-              : "bg-overlay border-overlay text-muted"
+              : "bg-surface border-overlay text-muted"
           }`}
         >
           Triple

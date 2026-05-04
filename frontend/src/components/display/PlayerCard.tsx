@@ -5,6 +5,8 @@ interface PlayerCardProps {
   player: Player;
   isActive: boolean;
   currentThrows: DartThrow[];
+  lastTurnThrows?: DartThrow[];
+  lastTurnWasBust?: boolean;
   mode: GameMode;
   playerCount: number;
 }
@@ -43,6 +45,8 @@ export default function PlayerCard({
   player,
   isActive,
   currentThrows,
+  lastTurnThrows = [],
+  lastTurnWasBust = false,
   mode,
   playerCount,
 }: PlayerCardProps) {
@@ -77,10 +81,13 @@ export default function PlayerCard({
       </div>
 
       <div className="flex-1 flex items-center justify-center">
-        <ThrowSlots
-          throws={isActive ? currentThrows : []}
-          invisible={!isActive}
-        />
+        {isActive ? (
+          <ThrowSlots throws={currentThrows} />
+        ) : lastTurnThrows.length > 0 ? (
+          <ThrowSlots throws={lastTurnThrows} slotClassName="bg-black/20" isBust={lastTurnWasBust} />
+        ) : (
+          <ThrowSlots throws={[]} invisible />
+        )}
       </div>
     </div>
   );
