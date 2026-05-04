@@ -2,6 +2,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/scan", "destination": "/index.html" },
+    { "source": "/display/:id", "destination": "/index.html" },
+    { "source": "/controller/:id", "destination": "/index.html" }
   ]
 }
