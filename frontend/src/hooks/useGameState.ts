@@ -19,7 +19,8 @@ export function useGameState(sessionId: string): { state: GameState | null; notF
           hasLoadedRef.current = true;
         }
       } catch (err) {
-        if (active && hasLoadedRef.current && err instanceof Error && err.message === 'API error 404') {
+        console.error('[useGameState] poll failed:', err);
+        if (active && err instanceof Error && err.message === 'API error 404') {
           setNotFound(true);
         }
       }
