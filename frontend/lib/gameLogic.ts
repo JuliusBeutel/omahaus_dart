@@ -87,7 +87,7 @@ export function processThrow(state: GameState, value: number, multiplier: Multip
     return {
       ...state,
       players: state.players.map((p, i) =>
-        i === playerIndex ? { ...p, dartsThrown: p.dartsThrown + 1 } : p
+        i === playerIndex ? { ...p, score: state.currentTurn.startScore, dartsThrown: p.dartsThrown + 1 } : p
       ),
       currentPlayerIndex: nextPlayerIndex,
       currentTurn: { startScore: nextStartScore, throws: [] },
@@ -174,13 +174,8 @@ export function undoLastThrow(state: GameState): GameState {
   const prevPlayerIndex = prevTurn.playerIndex;
   const throwsWithoutLast = prevTurn.throws.slice(0, -1);
 
-  const pointsToRestore = prevTurn.wasBust
-    ? 0
-    : prevTurn.throws[prevTurn.throws.length - 1].points;
-
-  const scoreAfterRestore = prevTurn.wasBust
-    ? prevTurn.startScore
-    : state.players[prevPlayerIndex].score + pointsToRestore;
+  const scoreAfterRestore =
+    prevTurn.startScore - throwsWithoutLast.reduce((sum, t) => sum + t.points, 0);
 
   const dartsToRestore = prevTurn.throws.length - 1;
   const prevDartsThrown = state.players[prevPlayerIndex].dartsThrown - prevTurn.throws.length + dartsToRestore;
