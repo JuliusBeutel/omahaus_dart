@@ -1,6 +1,6 @@
 import type { DartThrow } from '../../types/game';
-import DartIcon from './DartIcon';
 import { formatThrowLabel } from '../../../lib/gameLogic';
+import DartIcon from './DartIcon';
 
 interface ThrowSlotsProps {
   throws: DartThrow[];
@@ -11,18 +11,21 @@ export default function ThrowSlots({ throws, invisible = false }: ThrowSlotsProp
   const slots = [0, 1, 2];
 
   return (
-    <div className={`flex gap-2 justify-center ${invisible ? 'invisible' : ''}`}>
+    <div className={`flex gap-3 justify-center ${invisible ? 'invisible' : ''}`}>
       {slots.map((i) => {
         const t = throws[i];
         return (
           <div
             key={i}
-            className="flex items-center gap-1 bg-overlay rounded px-2 py-1 min-w-[3.5rem] justify-center"
+            className="flex items-center justify-center bg-overlay rounded-lg w-16 h-16"
           >
-            <DartIcon className="w-3 h-3 text-accent" />
-            <span className="text-sm font-mono text-primary">
-              {t ? formatThrowLabel(t) : '—'}
-            </span>
+            {t ? (
+              <span className="text-lg font-mono font-bold text-primary">
+                {formatThrowLabel(t)}
+              </span>
+            ) : (
+              <DartIcon className="w-9 h-9 text-muted/40" />
+            )}
           </div>
         );
       })}
