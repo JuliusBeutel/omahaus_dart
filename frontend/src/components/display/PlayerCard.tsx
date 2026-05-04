@@ -5,21 +5,48 @@ interface PlayerCardProps {
   player: Player;
   isActive: boolean;
   currentThrows: DartThrow[];
+  lastTurnThrows?: DartThrow[];
+  lastTurnWasBust?: boolean;
   mode: GameMode;
   playerCount: number;
 }
 
-const SIZES: Record<number, { padding: string; name: string; score: string; avg: string }> = {
-  1: { padding: 'p-6', name: 'text-6xl', score: 'text-[clamp(6rem,16vw,14rem)]',  avg: 'text-xl' },
-  2: { padding: 'p-6', name: 'text-5xl', score: 'text-[clamp(5rem,14vw,11rem)]',  avg: 'text-xl' },
-  3: { padding: 'p-5', name: 'text-4xl', score: 'text-[clamp(4rem,12vw,9rem)]',   avg: 'text-lg' },
-  4: { padding: 'p-4', name: 'text-3xl', score: 'text-[clamp(3rem,10vw,7rem)]',   avg: 'text-lg' },
+const SIZES: Record<
+  number,
+  { padding: string; name: string; score: string; avg: string }
+> = {
+  1: {
+    padding: "p-8",
+    name: "text-8xl",
+    score: "text-[clamp(8rem,22vw,22rem)]",
+    avg: "text-6xl",
+  },
+  2: {
+    padding: "p-2",
+    name: "text-6xl",
+    score: "text-[clamp(6rem,18vw,16rem)]",
+    avg: "text-5xl",
+  },
+  3: {
+    padding: "p-6",
+    name: "text-5xl",
+    score: "text-[clamp(4rem,15vw,12rem)]",
+    avg: "text-4xl",
+  },
+  4: {
+    padding: "p-5",
+    name: "text-4xl",
+    score: "text-[clamp(3rem,12vw,10rem)]",
+    avg: "text-3xl",
+  },
 };
 
 export default function PlayerCard({
   player,
   isActive,
   currentThrows,
+  lastTurnThrows = [],
+  lastTurnWasBust = false,
   mode,
   playerCount,
 }: PlayerCardProps) {
@@ -46,16 +73,21 @@ export default function PlayerCard({
         >
           {player.score}
         </span>
-        <span className={`${sz.avg} ${isActive ? "text-primary/60" : "text-muted/60"}`}>
+        <span
+          className={`${sz.avg} ${isActive ? "text-primary/60" : "text-muted/60"}`}
+        >
           Ø {avg}
         </span>
       </div>
 
       <div className="flex-1 flex items-center justify-center">
-        <ThrowSlots
-          throws={isActive ? currentThrows : []}
-          invisible={!isActive}
-        />
+        {isActive ? (
+          <ThrowSlots throws={currentThrows} />
+        ) : lastTurnThrows.length > 0 ? (
+          <ThrowSlots throws={lastTurnThrows} slotClassName="bg-black/20" isBust={lastTurnWasBust} />
+        ) : (
+          <ThrowSlots throws={[]} invisible />
+        )}
       </div>
     </div>
   );
