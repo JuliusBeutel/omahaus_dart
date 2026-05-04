@@ -19,6 +19,12 @@
     "react-router-dom": "^6.22.0",
     "uuid": "^9.0.1"
   },
+  "browserslist": [
+    "chrome >= 87",
+    "android >= 87",
+    "samsung >= 14",
+    "defaults"
+  ],
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@types/react": "^18.3.1",
