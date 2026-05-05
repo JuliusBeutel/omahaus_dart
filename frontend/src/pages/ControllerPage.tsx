@@ -16,6 +16,8 @@ import SetupScreen from "../components/controller/SetupScreen";
 import DartInput from "../components/controller/DartInput";
 import ThrowSlots from "../components/shared/ThrowSlots";
 
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
+
 export default function ControllerPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -31,7 +33,13 @@ export default function ControllerPage() {
       if (pendingRef.current) return;
       try {
         const data = await getSession(id!);
-        if (active) setGameState(data);
+        if (!active) return;
+        if (Date.now() - data.lastActivity > SESSION_TIMEOUT_MS) {
+          active = false;
+          navigate("/scan", { replace: true });
+          return;
+        }
+        setGameState(data);
       } catch {
         // ignore
       }

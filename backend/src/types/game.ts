@@ -36,4 +36,5 @@ export interface GameState {
   currentTurn: Turn;
   turnHistory: CompletedTurn[];
   winnerId?: string;
+  lastActivity: number;
 }

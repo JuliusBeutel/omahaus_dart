@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import type { GameState } from '../types/game';
 import { getSession } from '../api/client';
 
-export function useGameState(sessionId: string): { state: GameState | null; notFound: boolean } {
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
+
+export function useGameState(sessionId: string): { state: GameState | null; notFound: boolean; timedOut: boolean } {
   const [state, setState] = useState<GameState | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   const hasLoadedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -15,6 +18,10 @@ export function useGameState(sessionId: string): { state: GameState | null; notF
       try {
         const data = await getSession(sessionId);
         if (active) {
+          if (Date.now() - data.lastActivity > SESSION_TIMEOUT_MS) {
+            setTimedOut(true);
+            return;
+          }
           setState(data);
           hasLoadedRef.current = true;
         }
@@ -35,5 +42,5 @@ export function useGameState(sessionId: string): { state: GameState | null; notF
     };
   }, [sessionId]);
 
-  return { state, notFound };
+  return { state, notFound, timedOut };
 }

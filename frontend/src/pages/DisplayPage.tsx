@@ -19,14 +19,14 @@ const OVERLAY_UNMOUNT = OVERLAY_EXIT_START + 550;
 export default function DisplayPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { state, notFound } = useGameState(id!);
+  const { state, notFound, timedOut } = useGameState(id!);
   const prevHistoryLenRef = useRef(0);
   const [overlay, setOverlay] = useState<OverlayState | null>(null);
   const overlayTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
-    if (notFound) navigate("/", { replace: true });
-  }, [notFound, navigate]);
+    if (notFound || timedOut) navigate("/", { replace: true });
+  }, [notFound, timedOut, navigate]);
 
   useEffect(() => {
     if (!state) return;

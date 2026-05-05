@@ -13,7 +13,7 @@ export async function mutate(
     res.status(404).json({ error: 'Session not found' });
     return;
   }
-  const newState = transform(state);
+  const newState = { ...transform(state), lastActivity: Date.now() };
   await setSession(sessionId, newState);
   res.status(200).json(newState);
 }
