@@ -72,10 +72,10 @@ export default function DartInput({
   return (
     <div className="flex flex-col gap-2 w-full">
       {/* Double / Triple toggles */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-10 gap-2">
         <button
           onClick={() => toggleMultiplier(2)}
-          className={`py-3 rounded-lg font-bold transition-colors text-2xl ${
+          className={`col-span-5 py-3 rounded-lg font-bold transition-colors text-2xl ${
             multiplier === 2
               ? "bg-accent border-accent text-primary"
               : "bg-surface border-overlay text-muted"
@@ -85,7 +85,7 @@ export default function DartInput({
         </button>
         <button
           onClick={() => toggleMultiplier(3)}
-          className={`py-3 rounded-lg font-bold text-2xl transition-colors ${
+          className={`col-span-5 py-3 rounded-lg font-bold text-2xl transition-colors ${
             multiplier === 3
               ? "bg-accent border-accent text-primary"
               : "bg-surface border-overlay text-muted"
@@ -95,8 +95,8 @@ export default function DartInput({
         </button>
       </div>
 
-      {/* Number grid 4×5 */}
-      <div className="grid grid-cols-4 gap-2">
+      {/* Number grid 5×4 */}
+      <div className="grid grid-cols-10 gap-2">
         {NUMBERS.map((n) => (
           <NumberButton
             key={n}
@@ -104,27 +104,30 @@ export default function DartInput({
             multiplier={multiplier}
             onThrow={onThrow}
             disabled={disabled}
+            className="col-span-2"
           />
         ))}
       </div>
 
-      {/* Bottom row: 0 | 25 | Undo */}
-      <div className="grid grid-cols-4 gap-2">
+      {/* Bottom row: 0 (×2) | 25 (×1) | Undo (×2) */}
+      <div className="grid grid-cols-10 gap-2">
         <NumberButton
           value={0}
           multiplier={multiplier}
           onThrow={onThrow}
           disabled={disabled}
+          className="col-span-4"
         />
         <NumberButton
           value={25}
           multiplier={multiplier}
           onThrow={onThrow}
           disabled={disabled}
+          className="col-span-2"
         />
         <button
           onClick={onUndo}
-          className="col-span-2 py-3 bg-surface rounded-lg text-muted font-bold text-base active:bg-overlay"
+          className="col-span-4 py-3 bg-surface rounded-lg text-muted font-bold text-base active:bg-overlay"
         >
           ↩
         </button>

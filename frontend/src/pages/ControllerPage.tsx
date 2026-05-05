@@ -149,7 +149,7 @@ export default function ControllerPage() {
   return (
     <div className="flex flex-col h-full bg-base p-3 gap-3">
       {/* Player info — full width, exit button inside top-left */}
-      <div className="relative flex flex-col items-center bg-surface  rounded-xl p-3 py-4 gap-2">
+      <div className="relative flex flex-col items-center bg-surface  rounded-xl p-3 py-8 gap-2">
         <button
           onClick={() => setShowExitDialog(true)}
           className="absolute top-3 left-3 text-muted active:text-primary"
@@ -169,8 +169,8 @@ export default function ControllerPage() {
             <line x1="191" y1="256" x2="464" y2="256" />
           </svg>
         </button>
-        <span className="text-muted text-xl">{currentPlayer.name}</span>
-        <span className="text-5xl font-bold text-primary tabular-nums">
+        <span className="text-muted text-3xl">{currentPlayer.name}</span>
+        <span className="text-7xl font-bold text-primary tabular-nums">
           {currentPlayer.score}
         </span>
         <ThrowSlots throws={gameState.currentTurn.throws} />
