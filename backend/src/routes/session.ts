@@ -12,10 +12,14 @@ import {
   undoLastThrow,
   resetGame,
 } from '../services/gameLogic';
-import type { GameMode, Multiplier } from '../types/game';
+import type { GameMode, GameState, Multiplier } from '../types/game';
 import os from 'os';
 
 const router = Router();
+
+function touch(state: GameState): GameState {
+  return { ...state, lastActivity: Date.now() };
+}
 
 router.post('/sessions', (req, res) => {
   const sessionId = uuidv4();
@@ -39,7 +43,7 @@ router.post('/sessions/:id/throw', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
   const { value, multiplier } = req.body as { value: number; multiplier: Multiplier };
-  const newState = processThrow(state, value, multiplier);
+  const newState = touch(processThrow(state, value, multiplier));
   setSession(req.params.id, newState);
   res.json(newState);
 });
@@ -47,7 +51,7 @@ router.post('/sessions/:id/throw', (req, res) => {
 router.post('/sessions/:id/undo', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
-  const newState = undoLastThrow(state);
+  const newState = touch(undoLastThrow(state));
   setSession(req.params.id, newState);
   res.json(newState);
 });
@@ -56,7 +60,7 @@ router.patch('/sessions/:id/mode', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
   const { mode } = req.body as { mode: GameMode };
-  const newState = setMode(state, mode);
+  const newState = touch(setMode(state, mode));
   setSession(req.params.id, newState);
   res.json(newState);
 });
@@ -64,7 +68,7 @@ router.patch('/sessions/:id/mode', (req, res) => {
 router.post('/sessions/:id/start', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
-  const newState = startGame(state);
+  const newState = touch(startGame(state));
   setSession(req.params.id, newState);
   res.json(newState);
 });
@@ -72,7 +76,7 @@ router.post('/sessions/:id/start', (req, res) => {
 router.post('/sessions/:id/reset', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
-  const newState = resetGame(state);
+  const newState = touch(resetGame(state));
   setSession(req.params.id, newState);
   res.json(newState);
 });
@@ -81,7 +85,7 @@ router.post('/sessions/:id/players', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
   const { name } = req.body as { name: string };
-  const newState = addPlayer(state, name);
+  const newState = touch(addPlayer(state, name));
   setSession(req.params.id, newState);
   res.json(newState);
 });
@@ -89,7 +93,7 @@ router.post('/sessions/:id/players', (req, res) => {
 router.delete('/sessions/:id/players/:playerId', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
-  const newState = removePlayer(state, req.params.playerId);
+  const newState = touch(removePlayer(state, req.params.playerId));
   setSession(req.params.id, newState);
   res.json(newState);
 });
@@ -98,7 +102,7 @@ router.post('/sessions/:id/players/reorder', (req, res) => {
   const state = getSession(req.params.id);
   if (!state) return res.status(404).json({ error: 'Session not found' });
   const { orderedIds } = req.body as { orderedIds: string[] };
-  const newState = reorderPlayers(state, orderedIds);
+  const newState = touch(reorderPlayers(state, orderedIds));
   setSession(req.params.id, newState);
   res.json(newState);
 });

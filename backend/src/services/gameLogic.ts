@@ -10,6 +10,7 @@ export function createGame(sessionId: string): GameState {
     currentPlayerIndex: 0,
     currentTurn: { startScore: 501, throws: [] },
     turnHistory: [],
+    lastActivity: Date.now(),
   };
 }
 
