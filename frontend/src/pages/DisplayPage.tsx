@@ -84,11 +84,13 @@ export default function DisplayPage() {
     return (
       <div className="flex items-center justify-center h-full bg-base p-6">
         <div className="animate-pop-in flex flex-col items-center justify-center w-full h-full bg-player-active rounded-3xl gap-6">
-          <span className="text-primary/60 text-4xl font-medium tracking-widest uppercase">Gewinner</span>
-          <span className="text-primary font-bold leading-none text-[clamp(6rem,18vw,18rem)] text-center px-8">
+          <span className="text-primary/60 text-5xl font-medium tracking-widest uppercase">
+            Gewinner
+          </span>
+          <span className="text-primary font-bold leading-none text-9xl text-center">
             {winner?.name}
           </span>
-          <span className="text-primary/60 text-3xl">Ø {avg} Punkte/Runde</span>
+          <span className="text-primary/60 text-6xl">Ø {avg}</span>
         </div>
       </div>
     );
