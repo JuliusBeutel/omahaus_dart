@@ -70,3 +70,11 @@ export async function deleteSession(id: string): Promise<void> {
   const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
   if (!res.ok && res.status !== 404) throw new Error(`API error ${res.status}`);
 }
+
+export async function postPlug(id: string, on: boolean): Promise<void> {
+  await fetch(`/api/sessions/${id}/plug`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ on }),
+  });
+}

@@ -11,6 +11,7 @@ import {
   postUndo,
   postReset,
   deleteSession,
+  postPlug,
 } from "../api/client";
 import SetupScreen from "../components/controller/SetupScreen";
 import DartInput from "../components/controller/DartInput";
@@ -45,6 +46,7 @@ export default function ControllerPage() {
       }
     }
 
+    postPlug(id!, true).catch(() => {});
     poll();
     const interval = setInterval(poll, 800);
     return () => {
@@ -88,6 +90,7 @@ export default function ControllerPage() {
 
   async function handleExit() {
     if (!id) return;
+    postPlug(id, false).catch(() => {});
     try {
       const newState = await postReset(id);
       setGameState(newState);
@@ -98,6 +101,7 @@ export default function ControllerPage() {
 
   async function handleEndSession() {
     if (!id) return;
+    postPlug(id, false).catch(() => {});
     try {
       await deleteSession(id);
     } catch {

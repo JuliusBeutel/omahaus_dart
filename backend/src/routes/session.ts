@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getSession, setSession, deleteSession } from '../services/sessionStore';
+import { controlPlug } from '../services/tuya';
 import {
   createGame,
   addPlayer,
@@ -105,6 +106,18 @@ router.post('/sessions/:id/players/reorder', (req, res) => {
   const newState = touch(reorderPlayers(state, orderedIds));
   setSession(req.params.id, newState);
   res.json(newState);
+});
+
+router.post('/sessions/:id/plug', async (req, res) => {
+  const { on } = req.body as { on: boolean };
+  if (typeof on !== 'boolean') return res.status(400).json({ error: 'Invalid body' });
+  try {
+    await controlPlug(on);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Tuya plug error', err);
+    res.status(502).json({ error: 'Tuya API error' });
+  }
 });
 
 router.get('/local-ip', (_req, res) => {
