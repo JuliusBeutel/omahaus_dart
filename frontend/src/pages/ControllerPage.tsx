@@ -37,6 +37,7 @@ export default function ControllerPage() {
         if (!active) return;
         if (Date.now() - data.lastActivity > SESSION_TIMEOUT_MS) {
           active = false;
+          postPlug(id!, false).catch(() => {});
           navigate("/scan", { replace: true });
           return;
         }
@@ -90,7 +91,6 @@ export default function ControllerPage() {
 
   async function handleExit() {
     if (!id) return;
-    postPlug(id, false).catch(() => {});
     try {
       const newState = await postReset(id);
       setGameState(newState);
