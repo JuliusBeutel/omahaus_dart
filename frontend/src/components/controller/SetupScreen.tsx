@@ -6,12 +6,16 @@ import {
   deletePlayer,
   postStart,
   postReorder,
+  parseApiError,
 } from "../../api/client";
 
 interface SetupScreenProps {
   state: GameState;
   onStateChange: (state: GameState) => void;
   onEndSession?: () => void;
+  onMutationStart: () => void;
+  onMutationEnd: () => void;
+  onError: (msg: string) => void;
 }
 
 interface DragState {
@@ -29,6 +33,9 @@ export default function SetupScreen({
   state,
   onStateChange,
   onEndSession,
+  onMutationStart,
+  onMutationEnd,
+  onError,
 }: SetupScreenProps) {
   const [nameInput, setNameInput] = useState("");
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -39,33 +46,61 @@ export default function SetupScreen({
   const sessionId = state.sessionId;
 
   async function handleModeToggle(mode: GameMode) {
-    const newState = await patchMode(sessionId, mode);
-    onStateChange(newState);
+    onMutationStart();
+    try {
+      const newState = await patchMode(sessionId, mode);
+      onStateChange(newState);
+    } catch (err) {
+      onError(parseApiError(err));
+    } finally {
+      onMutationEnd();
+    }
   }
 
   async function handleAddPlayer() {
     const name = nameInput.trim();
     if (!name || state.players.length >= 4) return;
-    const newState = await postPlayer(sessionId, name);
-    onStateChange(newState);
-    setNameInput("");
-    inputRef.current?.focus();
+    onMutationStart();
+    try {
+      const newState = await postPlayer(sessionId, name);
+      onStateChange(newState);
+      setNameInput("");
+      inputRef.current?.focus();
+    } catch (err) {
+      onError(parseApiError(err));
+    } finally {
+      onMutationEnd();
+    }
   }
 
   async function handleRemovePlayer(playerId: string) {
-    const newState = await deletePlayer(sessionId, playerId);
-    onStateChange(newState);
+    onMutationStart();
+    try {
+      const newState = await deletePlayer(sessionId, playerId);
+      onStateChange(newState);
+    } catch (err) {
+      onError(parseApiError(err));
+    } finally {
+      onMutationEnd();
+    }
   }
 
   async function handleStart() {
-    let s = state;
-    if (nameInput.trim() && state.players.length < 4) {
-      s = await postPlayer(sessionId, nameInput.trim());
-      setNameInput("");
+    onMutationStart();
+    try {
+      let s = state;
+      if (nameInput.trim() && state.players.length < 4) {
+        s = await postPlayer(sessionId, nameInput.trim());
+        setNameInput("");
+      }
+      if (s.players.length < 1) return;
+      const newState = await postStart(sessionId);
+      onStateChange(newState);
+    } catch (err) {
+      onError(parseApiError(err));
+    } finally {
+      onMutationEnd();
     }
-    if (s.players.length < 1) return;
-    const newState = await postStart(sessionId);
-    onStateChange(newState);
   }
 
   function handleTouchStart(i: number, e: React.TouchEvent) {
@@ -110,13 +145,18 @@ export default function SetupScreen({
       if (!releaseCommitRef.current) return;
       releaseCommitRef.current = null;
       setDrag(null);
-      if (index !== targetIndex) {
-        onStateChange({ ...state, players: reordered });
-        postReorder(
-          sessionId,
-          reordered.map((p) => p.id),
-        );
-      }
+      if (index === targetIndex) return;
+
+      const prevPlayers = state.players;
+      onStateChange({ ...state, players: reordered });
+      onMutationStart();
+      postReorder(sessionId, reordered.map((p) => p.id))
+        .then(() => { onMutationEnd(); })
+        .catch((err) => {
+          onStateChange({ ...state, players: prevPlayers });
+          onError(parseApiError(err));
+          onMutationEnd();
+        });
     };
     releaseCommitRef.current = commit;
 

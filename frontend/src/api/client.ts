@@ -75,6 +75,24 @@ export async function postJoin(id: string): Promise<void> {
   await fetch(`/api/sessions/${id}/join`, { method: 'POST' });
 }
 
+export function parseApiError(err: unknown): string {
+  if (err instanceof Error) {
+    const match = err.message.match(/API error (\d+)/);
+    if (match) {
+      const code = parseInt(match[1]);
+      const descriptions: Record<number, string> = {
+        400: 'Ungültige Eingabe',
+        404: 'Sitzung nicht gefunden',
+        409: 'Aktion nicht möglich',
+        500: 'Interner Serverfehler',
+        502: 'Verbindungsfehler',
+      };
+      return `Fehler ${code} – ${descriptions[code] ?? 'Unbekannter Fehler'}`;
+    }
+  }
+  return 'Unbekannter Fehler';
+}
+
 export async function postPlug(id: string, on: boolean): Promise<void> {
   await fetch(`/api/sessions/${id}/plug`, {
     method: 'POST',
