@@ -97,10 +97,19 @@ export default function DisplayPage() {
   }
 
   if (state.status === "setup") {
-    if (state.players.length === 0) {
+    if (!state.controllerJoined) {
       return (
         <div className="h-full bg-base">
           <QRCodeDisplay sessionId={id!} />
+        </div>
+      );
+    }
+    if (state.players.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full bg-base">
+          <span className="text-muted text-5xl text-center px-8">
+            Füge Spieler mit deinem Smartphone hinzu
+          </span>
         </div>
       );
     }

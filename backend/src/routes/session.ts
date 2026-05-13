@@ -35,6 +35,15 @@ router.get('/sessions/:id', (req, res) => {
   res.json(state);
 });
 
+router.post('/sessions/:id/join', (req, res) => {
+  const state = getSession(req.params.id);
+  if (!state) return res.status(404).json({ error: 'Session not found' });
+  if (!state.controllerJoined) {
+    setSession(req.params.id, { ...state, controllerJoined: true });
+  }
+  res.json({ ok: true });
+});
+
 router.delete('/sessions/:id', (req, res) => {
   deleteSession(req.params.id);
   res.status(204).end();
@@ -111,6 +120,12 @@ router.post('/sessions/:id/players/reorder', (req, res) => {
 router.post('/sessions/:id/plug', async (req, res) => {
   const { on } = req.body as { on: boolean };
   if (typeof on !== 'boolean') return res.status(400).json({ error: 'Invalid body' });
+  if (on) {
+    const state = getSession(req.params.id);
+    if (state && !state.controllerJoined) {
+      setSession(req.params.id, { ...state, controllerJoined: true });
+    }
+  }
   try {
     await controlPlug(on);
     res.json({ ok: true });

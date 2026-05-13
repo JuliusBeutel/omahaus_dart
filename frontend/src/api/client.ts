@@ -71,6 +71,10 @@ export async function deleteSession(id: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`API error ${res.status}`);
 }
 
+export async function postJoin(id: string): Promise<void> {
+  await fetch(`/api/sessions/${id}/join`, { method: 'POST' });
+}
+
 export async function postPlug(id: string, on: boolean): Promise<void> {
   await fetch(`/api/sessions/${id}/plug`, {
     method: 'POST',
