@@ -35,6 +35,8 @@ export default function ControllerPage() {
   // the latest value even when called before React has re-rendered.
   const gameStateRef = useRef<GameState | null>(null);
   const multiplierRef = useRef<Multiplier>(1);
+  // Promise chain — serialises throw/undo requests so they reach the server in order
+  const throwChainRef = useRef<Promise<void>>(Promise.resolve());
 
   function applyState(s: GameState) {
     gameStateRef.current = s;
@@ -86,32 +88,35 @@ export default function ControllerPage() {
     };
   }, [id]);
 
-  async function handleThrow(value: number) {
+  function handleThrow(value: number) {
     const current = gameStateRef.current;
     if (!current || current.status !== "playing") return;
-    const prevState = current;
     const usedMultiplier = multiplierRef.current;
     applyState(localProcessThrow(current, value, usedMultiplier));
     applyMultiplier(1);
-    try {
-      await postThrow(id!, value, usedMultiplier);
-    } catch (err) {
-      applyState(prevState);
-      setError(parseApiError(err));
-    }
+    throwChainRef.current = throwChainRef.current.then(async () => {
+      try {
+        await postThrow(id!, value, usedMultiplier);
+      } catch (err) {
+        setError(parseApiError(err));
+        try { applyState(await getSession(id!)); } catch { /* ignore */ }
+      }
+    });
   }
 
-  async function handleUndo() {
+  function handleUndo() {
     const current = gameStateRef.current;
     if (!current) return;
     const prevState = current;
     applyState(localUndo(current));
-    try {
-      await postUndo(id!);
-    } catch (err) {
-      applyState(prevState);
-      setError(parseApiError(err));
-    }
+    throwChainRef.current = throwChainRef.current.then(async () => {
+      try {
+        await postUndo(id!);
+      } catch (err) {
+        applyState(prevState);
+        setError(parseApiError(err));
+      }
+    });
   }
 
   async function handleExit() {
