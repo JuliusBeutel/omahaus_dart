@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { GameState, Multiplier } from "../types/game";
+import type { GameState, GameStatus, Multiplier } from "../types/game";
 import {
   processThrow as localProcessThrow,
   undoLastThrow as localUndo,
@@ -29,8 +29,13 @@ export default function ControllerPage() {
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showEndSessionDialog, setShowEndSessionDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Counter: >0 means a local mutation is in flight — polling must not overwrite state
   const pendingRef = useRef(0);
+  const gameStatusRef = useRef<GameStatus | null>(null);
+
+  function applyState(s: GameState) {
+    gameStatusRef.current = s.status;
+    setGameState(s);
+  }
 
   useEffect(() => {
     if (!error) return;
@@ -53,7 +58,9 @@ export default function ControllerPage() {
           navigate("/scan", { replace: true });
           return;
         }
-        setGameState(data);
+        if (gameStatusRef.current !== 'playing') {
+          applyState(data);
+        }
       } catch {
         // ignore transient poll errors
       }
@@ -72,35 +79,25 @@ export default function ControllerPage() {
   async function handleThrow(value: number) {
     if (!gameState || gameState.status !== "playing") return;
     const prevState = gameState;
-    const optimistic = localProcessThrow(gameState, value, multiplier);
-    setGameState(optimistic);
+    applyState(localProcessThrow(gameState, value, multiplier));
     setMultiplier(1);
-    pendingRef.current++;
     try {
-      const newState = await postThrow(id!, value, multiplier);
-      setGameState(newState);
+      await postThrow(id!, value, multiplier);
     } catch (err) {
-      setGameState(prevState);
+      applyState(prevState);
       setError(parseApiError(err));
-    } finally {
-      pendingRef.current--;
     }
   }
 
   async function handleUndo() {
     if (!gameState) return;
     const prevState = gameState;
-    const optimistic = localUndo(gameState);
-    setGameState(optimistic);
-    pendingRef.current++;
+    applyState(localUndo(gameState));
     try {
-      const newState = await postUndo(id!);
-      setGameState(newState);
+      await postUndo(id!);
     } catch (err) {
-      setGameState(prevState);
+      applyState(prevState);
       setError(parseApiError(err));
-    } finally {
-      pendingRef.current--;
     }
   }
 
@@ -109,7 +106,7 @@ export default function ControllerPage() {
     pendingRef.current++;
     try {
       const newState = await postReset(id);
-      setGameState(newState);
+      applyState(newState);
     } catch (err) {
       setError(parseApiError(err));
     } finally {
