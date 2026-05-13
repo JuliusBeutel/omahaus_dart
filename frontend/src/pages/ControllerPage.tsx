@@ -26,6 +26,7 @@ export default function ControllerPage() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [multiplier, setMultiplier] = useState<Multiplier>(1);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showEndSessionDialog, setShowEndSessionDialog] = useState(false);
   const pendingRef = useRef(false);
 
   useEffect(() => {
@@ -133,20 +134,57 @@ export default function ControllerPage() {
   if (gameState.status === "finished") {
     const winner = gameState.players.find((p) => p.id === gameState.winnerId);
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-base gap-8 p-6">
-        <div className="flex flex-col items-center gap-4 bg-surface border border-accent rounded-2xl px-8 py-8 w-full">
-          <span className="text-muted">Gewinner</span>
-          <span className="text-4xl font-bold text-primary">
-            {winner?.name}
-          </span>
+      <>
+        <div className="flex flex-col items-center justify-center h-full bg-base gap-4 p-6">
+          <div className="flex flex-col items-center gap-4 bg-surface rounded-2xl px-8 py-8 w-full">
+            <span className="text-muted">Gewinner</span>
+            <span className="text-4xl font-bold text-primary">
+              {winner?.name}
+            </span>
+          </div>
+          <button
+            onClick={handleExit}
+            className="w-full py-4 mt-10 rounded-xl bg-action text-primary font-bold text-xl"
+          >
+            Neues Spiel
+          </button>
+          <button
+            onClick={() => setShowEndSessionDialog(true)}
+            className="w-full py-4 rounded-xl bg-action text-primary font-bold text-xl"
+          >
+            Session beenden
+          </button>
         </div>
-        <button
-          onClick={handleExit}
-          className="w-full py-4 rounded-xl bg-action text-primary font-bold text-xl"
-        >
-          Neues Spiel
-        </button>
-      </div>
+
+        {showEndSessionDialog && (
+          <div className="fixed inset-0 bg-base/80 z-50 flex items-center justify-center p-6">
+            <div className="bg-surface border border-accent rounded-2xl p-8 flex flex-col gap-6 w-full">
+              <div className="flex flex-col gap-1">
+                <span className="text-primary text-xl font-bold">
+                  Session beenden?
+                </span>
+                <span className="text-muted text-sm">
+                  Die Session wird gelöscht und du kommst zurück zum Scannen.
+                </span>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleEndSession}
+                  className="py-4 rounded-xl bg-danger text-primary font-bold text-lg active:opacity-80"
+                >
+                  Ja
+                </button>
+                <button
+                  onClick={() => setShowEndSessionDialog(false)}
+                  className="py-4 rounded-xl bg-overlay text-muted font-bold text-lg active:bg-accent"
+                >
+                  Nein
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
