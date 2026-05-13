@@ -2,15 +2,20 @@ import { v4 as uuidv4 } from 'uuid';
 import type { GameState, GameMode, Multiplier, DartThrow, Player } from '../types/game';
 
 export function createGame(sessionId: string): GameState {
+  const defaultPlayers: Player[] = [
+    { id: uuidv4(), name: 'Jens', score: 501, dartsThrown: 0 },
+    { id: uuidv4(), name: 'Julius', score: 501, dartsThrown: 0 },
+  ];
   return {
     sessionId,
     mode: 501,
     status: 'setup',
-    players: [],
+    players: defaultPlayers,
     currentPlayerIndex: 0,
     currentTurn: { startScore: 501, throws: [] },
     turnHistory: [],
     lastActivity: Date.now(),
+    controllerJoined: false,
   };
 }
 

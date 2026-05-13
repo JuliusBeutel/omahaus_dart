@@ -12,6 +12,7 @@ import {
   postReset,
   deleteSession,
   postPlug,
+  postJoin,
 } from "../api/client";
 import SetupScreen from "../components/controller/SetupScreen";
 import DartInput from "../components/controller/DartInput";
@@ -47,6 +48,7 @@ export default function ControllerPage() {
       }
     }
 
+    postJoin(id!).catch(() => {});
     postPlug(id!, true).catch(() => {});
     poll();
     const interval = setInterval(poll, 800);
