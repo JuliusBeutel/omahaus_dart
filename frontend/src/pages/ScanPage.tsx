@@ -7,8 +7,11 @@ export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
+    if (!scanning) return;
+
     let stream: MediaStream | null = null;
     let rafId: number;
     let active = true;
@@ -60,7 +63,7 @@ export default function ScanPage() {
       cancelAnimationFrame(rafId);
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, [navigate]);
+  }, [scanning, navigate]);
 
   return (
     <div className="flex flex-col h-full bg-base">
@@ -72,8 +75,17 @@ export default function ScanPage() {
           <div className="flex items-center justify-center h-full">
             <span className="text-danger text-center px-4">{error}</span>
           </div>
-        ) : (
+        ) : scanning ? (
           <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <button
+              onClick={() => setScanning(true)}
+              className="px-12 py-5 rounded-2xl bg-action text-primary font-bold text-2xl active:opacity-80"
+            >
+              Scan
+            </button>
+          </div>
         )}
         <canvas ref={canvasRef} className="hidden" />
       </div>
