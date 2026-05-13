@@ -31,10 +31,22 @@ export default function ControllerPage() {
   const [error, setError] = useState<string | null>(null);
   const pendingRef = useRef(0);
   const gameStatusRef = useRef<GameStatus | null>(null);
+  // Refs mirror the matching state so handleThrow/handleUndo always read
+  // the latest value even when called before React has re-rendered.
+  const gameStateRef = useRef<GameState | null>(null);
+  const multiplierRef = useRef<Multiplier>(1);
+  // Promise chain — serialises throw/undo requests so they reach the server in order
+  const throwChainRef = useRef<Promise<void>>(Promise.resolve());
 
   function applyState(s: GameState) {
+    gameStateRef.current = s;
     gameStatusRef.current = s.status;
     setGameState(s);
+  }
+
+  function applyMultiplier(m: Multiplier) {
+    multiplierRef.current = m;
+    setMultiplier(m);
   }
 
   useEffect(() => {
@@ -76,29 +88,35 @@ export default function ControllerPage() {
     };
   }, [id]);
 
-  async function handleThrow(value: number) {
-    if (!gameState || gameState.status !== "playing") return;
-    const prevState = gameState;
-    applyState(localProcessThrow(gameState, value, multiplier));
-    setMultiplier(1);
-    try {
-      await postThrow(id!, value, multiplier);
-    } catch (err) {
-      applyState(prevState);
-      setError(parseApiError(err));
-    }
+  function handleThrow(value: number) {
+    const current = gameStateRef.current;
+    if (!current || current.status !== "playing") return;
+    const usedMultiplier = multiplierRef.current;
+    applyState(localProcessThrow(current, value, usedMultiplier));
+    applyMultiplier(1);
+    throwChainRef.current = throwChainRef.current.then(async () => {
+      try {
+        await postThrow(id!, value, usedMultiplier);
+      } catch (err) {
+        setError(parseApiError(err));
+        try { applyState(await getSession(id!)); } catch { /* ignore */ }
+      }
+    });
   }
 
-  async function handleUndo() {
-    if (!gameState) return;
-    const prevState = gameState;
-    applyState(localUndo(gameState));
-    try {
-      await postUndo(id!);
-    } catch (err) {
-      applyState(prevState);
-      setError(parseApiError(err));
-    }
+  function handleUndo() {
+    const current = gameStateRef.current;
+    if (!current) return;
+    const prevState = current;
+    applyState(localUndo(current));
+    throwChainRef.current = throwChainRef.current.then(async () => {
+      try {
+        await postUndo(id!);
+      } catch (err) {
+        applyState(prevState);
+        setError(parseApiError(err));
+      }
+    });
   }
 
   async function handleExit() {
@@ -238,7 +256,7 @@ export default function ControllerPage() {
         <div className="flex-1 flex flex-col justify-end">
           <DartInput
             multiplier={multiplier}
-            onMultiplierChange={setMultiplier}
+            onMultiplierChange={applyMultiplier}
             onThrow={handleThrow}
             onUndo={handleUndo}
           />
