@@ -1,53 +1,26 @@
-import { createHmac, createHash } from 'crypto';
-
-const BASE_URL = 'https://openapi.tuyaeu.com';
-
-function sha256(data: string): string {
-  return createHash('sha256').update(data).digest('hex');
-}
-
-function hmacSha256(data: string, secret: string): string {
-  return createHmac('sha256', secret).update(data).digest('hex').toUpperCase();
-}
-
-async function getToken(): Promise<string> {
-  const clientId = process.env.TUYA_CLIENT_ID!;
-  const clientSecret = process.env.TUYA_CLIENT_SECRET!;
-  const t = Date.now().toString();
-  const path = '/v1.0/token?grant_type=1';
-  const stringToSign = `GET\n${sha256('')}\n\n${path}`;
-  const sign = hmacSha256(clientId + t + stringToSign, clientSecret);
-
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { client_id: clientId, t, sign_method: 'HMAC-SHA256', nonce: '', sign },
-  });
-  const data = (await res.json()) as { result: { access_token: string } };
-  return data.result.access_token;
-}
+const HA_URL = process.env.HA_URL!; // https://ha.deine-domain.com
+const HA_TOKEN = process.env.HA_TOKEN!;
+const ENTITY_ID = process.env.HA_ENTITY_ID!; // z.B. switch.steckdose_buero
 
 export async function controlPlug(on: boolean): Promise<void> {
-  const clientId = process.env.TUYA_CLIENT_ID!;
-  const clientSecret = process.env.TUYA_CLIENT_SECRET!;
-  const deviceId = process.env.TUYA_DEVICE_ID!;
+  const service = on ? "turn_on" : "turn_off";
 
-  const accessToken = await getToken();
-  const t = Date.now().toString();
-  const path = `/v1.0/iot-03/devices/${deviceId}/commands`;
-  const body = JSON.stringify({ commands: [{ code: 'switch_1', value: on }] });
-  const stringToSign = `POST\n${sha256(body)}\n\n${path}`;
-  const sign = hmacSha256(clientId + accessToken + t + stringToSign, clientSecret);
+  console.log("Calling HA:", `${HA_URL}/api/services/switch/${service}`);
 
-  await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers: {
-      client_id: clientId,
-      t,
-      sign_method: 'HMAC-SHA256',
-      nonce: '',
-      access_token: accessToken,
-      sign,
-      'Content-Type': 'application/json',
-    },
-    body,
-  });
+  try {
+    const res = await fetch(`${HA_URL}/api/services/switch/${service}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${HA_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ entity_id: ENTITY_ID }),
+    });
+
+    console.log("HA response status:", res.status);
+    console.log("HA response body:", await res.text());
+  } catch (err) {
+    console.error("Fetch failed entirely:", err);
+    throw err;
+  }
 }
