@@ -78,8 +78,7 @@ export default function DisplayPage() {
   if (state.status === "finished") {
     const winner = state.players.find((p) => p.id === state.winnerId);
     const totalDarts = winner?.dartsThrown ?? 0;
-    const totalRounds = Math.ceil(totalDarts / 3);
-    const avg = totalRounds > 0 ? Math.round(state.mode / totalRounds) : 0;
+    const avg = totalDarts > 0 ? Math.round((state.mode / totalDarts) * 3) : 0;
 
     return (
       <div className="flex items-center justify-center h-full bg-base p-6">
